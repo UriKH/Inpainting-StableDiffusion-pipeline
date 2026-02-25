@@ -22,7 +22,7 @@ def load_sd2_components(model_path, device="cuda"):
     return vae, unet, text_encoder, tokenizer, scheduler
 
 # The exact model requested in the assignment instructions 
-model_id = "stabilityai/stable-diffusion-2-base"
+model_id = "Manojb/stable-diffusion-2-base"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # 1. Load components using your provided function
