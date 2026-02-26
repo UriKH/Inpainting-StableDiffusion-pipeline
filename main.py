@@ -58,11 +58,11 @@ class PipeLine:
             with open(os.path.join(dir_in, name, '.txt'), "r") as f:
                 prompt = f.read()
 
-            mask = Image.open(os.path.join(dir_in, name, '.mask.png')).convert('RGB')
-            image = Image.open(os.path.join(dir_in, name, '.png')).convert('RGB')
+            mask = Image.open(os.path.join(dir_in, name, 'dolls.mask.png')).convert('RGB')
+            image = Image.open(os.path.join(dir_in, name, 'dolls.png')).convert('RGB')
             pipe_in = TripletInpaintPipeline(prompt=prompt, image=image, mask_image=mask)
             result = self.apply(pipe_in)
-            result.save(os.path.join(dir_out, name, '.png'))
+            result.save(os.path.join(dir_out, name, 'dolls.png'))
 
 
 if __name__ == "__main__":

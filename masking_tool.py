@@ -1,6 +1,9 @@
+import os.path
+
 import cv2 as cv
 import numpy as np
 import sys
+import argparse
 
 BRUSH_SIZE = 20
 drawing = False
@@ -30,6 +33,14 @@ def draw_mask(event, x, y, flags, param):
 
 def crop_image(img):
     h, w = img.shape[:2]
+
+    MAX_SCREEN_SIZE = 800  # Adjust this if your screen is smaller or larger
+    if max(h, w) > MAX_SCREEN_SIZE:
+        scale = MAX_SCREEN_SIZE / max(h, w)
+        img = cv.resize(img, (int(w * scale), int(h * scale)))
+        h, w = img.shape[:2]
+        print(f"Image scaled down to {w}x{h} to fit your screen.")
+
     if h != w:
         print("\n--- CROP INSTRUCTIONS ---")
         print("1. Your image is not a square. Click and drag to select a region.")
@@ -54,7 +65,7 @@ def crop_image(img):
     return img
 
 
-def run_masking_tool(image_path):
+def run_masking_tool(image_path, output_dir):
     global mask, display_img
 
     img = cv.imread(image_path)
@@ -75,17 +86,22 @@ def run_masking_tool(image_path):
     print("2. Press 'c' to clear canvas.")
     print("3. Press 's' to save the final image and mask, then exit.")
     print("4. Press 'q' to quit without saving.\n")
-    
+
+    image_name = image_path.split(os.path.sep)[-1].split(".")[0]
+
     while True:
         blended = cv.addWeighted(img, 0.7, display_img, 0.3, 0)
         cv.imshow('Draw Your Mask', blended)
     
         key = cv.waitKey(1) & 0xFF
-    
+
+        mask_name = os.path.join(output_dir, f"{image_name}.mask.png")
+        crop_name = os.path.join(output_dir, f"{image_name}.png")
+
         if key == ord('s'):
-            cv.imwrite("init_image.png", img)
-            cv.imwrite("mask_image.mask.png", mask)
-            print("Success! Saved 'init_image.png' and 'mask_image.png'.")
+            cv.imwrite(crop_name, img)
+            cv.imwrite(mask_name, mask)
+            print("Success! Images saved")
             break
         elif key == ord('c'):
             display_img = img.copy()
@@ -101,4 +117,11 @@ def run_masking_tool(image_path):
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         raise IOError("No image path provided. Please provide a path to an image.")
-    run_masking_tool(sys.argv[1])
+
+    parser = argparse.ArgumentParser(description="Interactive tool to crop and mask images for Stable Diffusion.")
+    parser.add_argument("image_path", help="Path to the input image.")
+    parser.add_argument("-o", "--output", default=".", help="Folder path to save the resulting images.")
+
+    args = parser.parse_args()
+
+    run_masking_tool(args.image_path, args.output)
