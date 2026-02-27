@@ -39,6 +39,6 @@ class ImprovedInpaintPipeline(InpaintPipeline):
 
     def prepare_mask_tensor(self, mask_image):
         mask_np = np.array(mask_image).astype(np.float32) / 255.0
-        mask_np = cv.blur(mask_np, (7, 7))
+        mask_np = cv.blur(mask_np, (3, 3))
         mask_tensor = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(self.device)
         return mask_tensor
