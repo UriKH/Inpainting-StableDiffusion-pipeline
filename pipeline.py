@@ -10,6 +10,7 @@ from transformers import CLIPTextModel, CLIPTokenizer
 from PIL import Image, ImageDraw
 import os
 import torch
+from tqdm import tqdm
 
 
 @dataclass
@@ -42,6 +43,7 @@ class SD2InpaintingPipeLineScheme(ABC):
                                                      torch_dtype=torch.float32).to(device)
         tokenizer = CLIPTokenizer.from_pretrained(model_path, subfolder="tokenizer")
         scheduler = DDPMScheduler.from_pretrained(model_path, subfolder="scheduler", torch_dtype=torch.float32)
+        print('Componenets loaded successfully')
         return vae, unet, text_encoder, tokenizer, scheduler
 
     @abstractmethod
@@ -52,7 +54,7 @@ class SD2InpaintingPipeLineScheme(ABC):
         file_names = {file.split('.')[0] for file in os.listdir(dir_in)}
         os.makedirs(dir_out, exist_ok=True)
 
-        for name in file_names:
+        for name in tqdm(file_names, desc='Apply pipeline: '):
             if len(name) == 0:
                 continue
             prompt = None
