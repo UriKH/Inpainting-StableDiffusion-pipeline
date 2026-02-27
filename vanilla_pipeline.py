@@ -24,9 +24,12 @@ class InpaintPipelineInput:
 
     def __post_init__(self):
         if isinstance(self.init_image, str):
-            self.init_image = Image.open(self.init_image).convert("RGB").resize((512, 512))
+            self.init_image = Image.open(self.init_image)
+        self.init_image = self.init_image.convert("RGB").resize((512, 512))
+        
         if isinstance(self.mask_image, str):
-            self.mask_image = Image.open(self.mask_image).convert("L").resize((64, 64))
+            self.mask_image = Image.open(self.mask_image)
+        self.mask_image = self.mask_image.convert("L").resize((64, 64))
 
 
 class SD2InpaintingPipeLineScheme(ABC):
@@ -112,7 +115,6 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
         self.scheduler.set_timesteps(num_inference_steps)
         latents = torch.randn_like(init_latents)
 
-        print("Starting the custom denoising loop...")
         for i, t in enumerate(self.scheduler.timesteps):
             # Expand latents for classifier free guidance
             latent_model_input = torch.cat([latents] * 2)
