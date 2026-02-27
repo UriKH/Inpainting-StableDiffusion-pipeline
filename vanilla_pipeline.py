@@ -69,6 +69,7 @@ class SD2InpaintingPipeLineScheme(ABC):
 class InpaintPipeline(SD2InpaintingPipeLineScheme):
     MODEL_ID = "Manojb/stable-diffusion-2-base"
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+    SD_SCALE_FACTOR = 0.18215
 
     def __init__(self, model_id=MODEL_ID, device=DEVICE):
         super().__init__(model_id, device)
@@ -83,11 +84,11 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
         text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
         return text_embeddings
 
-    def prepare_latents(self, image, vae):
+    def prepare_latents(self, image):
         image_np = np.array(image).astype(np.float32) / 127.5 - 1.0
         image_tensor = torch.from_numpy(image_np).permute(2, 0, 1).unsqueeze(0).to(self.device)
         with torch.no_grad():
-            init_latents = vae.encode(image_tensor).latent_dist.sample()
+            init_latents = self.vae.encode(image_tensor).latent_dist.sample()
             init_latents = self.SD_SCALE_FACTOR * init_latents
         return init_latents
 
@@ -107,10 +108,11 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
         image = (image * 255).round().astype("uint8")
         return Image.fromarray(image)
 
-    def denoise(self, text_embeddings, latents, mask_tensor, num_inference_steps=50):
+    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
         self.scheduler.set_timesteps(num_inference_steps)
-        latents = torch.randn_like(latents)
+        latents = torch.randn_like(init_latents)
 
+        print("Starting the custom denoising loop...")
         for i, t in enumerate(self.scheduler.timesteps):
             # Expand latents for classifier free guidance
             latent_model_input = torch.cat([latents] * 2)
@@ -129,8 +131,8 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
 
             # --- THE VANILLA INPAINTING MAGIC HAPPENS HERE ---
             # 1. Add the correct amount of noise to the original image for this specific timestep
-            noise = torch.randn_like(latents)
-            noisy_init_latents = self.scheduler.add_noise(latents, noise, t)
+            noise = torch.randn_like(init_latents)
+            noisy_init_latents = self.scheduler.add_noise(init_latents, noise, t)
 
             # 2. Force the background to stay true to the original image, while keeping the AI's generation inside the mask
             latents = (noisy_init_latents * (1 - mask_tensor)) + (latents * mask_tensor)
@@ -138,7 +140,7 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
 
     def pipe(self, pipe_in: InpaintPipelineInput):
         text_embeddings = self.encode_prompt(pipe_in.prompt, self.text_encoder, self.tokenizer)
-        latents = self.prepare_latents(pipe_in.init_image, self.vae)
+        latents = self.prepare_latents(pipe_in.init_image)
         mask = self.prepare_mask_tensor(pipe_in.mask_image)
         latents = self.denoise(text_embeddings, latents, mask)
         final_image = self.decode_latents(latents)
