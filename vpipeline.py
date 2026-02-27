@@ -53,18 +53,20 @@ class PipeLine:
 
     def apply_multiple(self, dir_in: str, dir_out: str):
         file_names = {file.split('.')[0] for file in os.listdir(dir_in)}
+        os.makedirs(dir_out, exist_ok=True)
+
         for name in file_names:
             if len(name) == 0:
                 continue
             prompt = None
-            with open(os.path.join(dir_in, name, '.txt'), "r") as f:
+            with open(os.path.join(dir_in, f'{name}.txt'), "r") as f:
                 prompt = f.read()
 
-            mask = Image.open(os.path.join(dir_in, name, '.mask.png')).convert('RGB')
-            image = Image.open(os.path.join(dir_in, name, '.png')).convert('RGB')
+            mask = Image.open(os.path.join(dir_in, f'{name}.mask.png')).convert('RGB')
+            image = Image.open(os.path.join(dir_in, f'{name}.png')).convert('RGB')
             pipe_in = TripletInpaintPipeline(prompt=prompt, image=image, mask_image=mask)
             result = self.apply(pipe_in)
-            result.save(os.path.join(dir_out, name, '.png'))
+            result.save(os.path.join(dir_out, f'{name}.png'))
 
 
 if __name__ == "__main__":
