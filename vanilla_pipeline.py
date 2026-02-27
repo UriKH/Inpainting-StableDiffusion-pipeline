@@ -30,9 +30,6 @@ class InpaintPipelineInput:
 
 
 class SD2InpaintingPipeLineScheme(ABC):
-    MODEL_ID = "Manojb/stable-diffusion-2-base"
-    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
     def __init__(self, model_id, device):
         self.device = device
         self.vae, self.unet, self.text_encoder, self.tokenizer, self.scheduler = self.load_sd2_components(model_id, device=device)
@@ -70,7 +67,10 @@ class SD2InpaintingPipeLineScheme(ABC):
 
 
 class InpaintPipeline(SD2InpaintingPipeLineScheme):
-    def __init__(self, model_id=super().MODEL_ID, device=super().DEVICE):
+    MODEL_ID = "Manojb/stable-diffusion-2-base"
+    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+    def __init__(self, model_id=MODEL_ID, device=DEVICE):
         super().__init__(model_id, device)
 
     def encode_prompt(self, prompt, text_encoder, tokenizer):
