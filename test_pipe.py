@@ -1,21 +1,14 @@
 import torch
 import numpy as np
-from PIL import Image
-
-# (Assuming you paste your load_sd2_components function here)
-# ...
-
 import dataclasses
 import os
 
-import torch
 from diffusers import (
     StableDiffusionInpaintPipeline,
     UNet2DConditionModel,
     AutoencoderKL,
     DDPMScheduler
 )
-
 from transformers import CLIPTextModel, CLIPTokenizer
 from PIL import Image, ImageDraw
 from dataclasses import dataclass
@@ -44,10 +37,9 @@ prompt = "a bright red apple"
 init_image = Image.open("./data/ours/masked/dog.png").convert("RGB").resize((512, 512))
 mask_image = Image.open("./data/ours/masked/dog.mask.png").convert("L").resize((64, 64)) # Mask must match latent size (512/8 = 64)
 
-# 3. Encode Prompt (with Classifier-Free Guidance)
+# 3. Encode Prompt
 text_input = tokenizer(prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt")
 text_embeddings = text_encoder(text_input.input_ids.to(device))[0]
-
 uncond_input = tokenizer([""], padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt")
 uncond_embeddings = text_encoder(uncond_input.input_ids.to(device))[0]
 text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
@@ -55,14 +47,12 @@ text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
 # 4. Prepare Image Latents
 image_np = np.array(init_image).astype(np.float32) / 127.5 - 1.0  # Normalize to [-1, 1]
 image_tensor = torch.from_numpy(image_np).permute(2, 0, 1).unsqueeze(0).to(device)
-
 with torch.no_grad():
     init_latents = vae.encode(image_tensor).latent_dist.sample()
     init_latents = 0.18215 * init_latents  # Magic scaling factor for SD
 
 # 5. Prepare Mask Tensor
 mask_np = np.array(mask_image).astype(np.float32) / 255.0
-# Ensure mask is 1 for the hole (where we generate) and 0 for background
 mask_tensor = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(device)
 
 # 6. Set up the Denoising Loop
@@ -72,7 +62,6 @@ timesteps = scheduler.timesteps
 
 # Start with pure random noise
 latents = torch.randn_like(init_latents)
-
 print("Starting the custom denoising loop...")
 for i, t in enumerate(timesteps):
     # Expand latents for classifier free guidance
