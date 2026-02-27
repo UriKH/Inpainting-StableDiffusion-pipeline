@@ -26,7 +26,7 @@ class InpaintPipelineInput:
 
         if isinstance(self.mask_image, str):
             self.mask_image = Image.open(self.mask_image)
-        self.mask_image = self.mask_image.convert("L").resize((64, 64))
+        self.mask_image = self.mask_image.convert("L").resize((64, 64), resample=Image.NEAREST)     # prevents blur
 
 
 class SD2InpaintingPipeLineScheme(ABC):
@@ -59,7 +59,7 @@ class SD2InpaintingPipeLineScheme(ABC):
                 continue
             prompt = None
             with open(os.path.join(dir_in, f'{name}.txt'), "r") as f:
-                prompt = f.read()
+                prompt = f.read().strip()
 
             mask = Image.open(os.path.join(dir_in, f'{name}.mask.png')).convert('RGB')
             image = Image.open(os.path.join(dir_in, f'{name}.png')).convert('RGB')
