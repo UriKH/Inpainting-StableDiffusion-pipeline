@@ -14,9 +14,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 class PipeLine(SD2InpaintingPipeLineScheme):
     def __init__(self, model_id=MODEL_ID, device=DEVICE):
         super().__init__(model_id, device)
-
-    def pipe(self, pipe_in: InpaintPipelineInput):
-        p = StableDiffusionInpaintPipeline(
+        self.p = StableDiffusionInpaintPipeline(
             vae=self.vae,
             text_encoder=self.text_encoder,
             tokenizer=self.tokenizer,
@@ -25,7 +23,10 @@ class PipeLine(SD2InpaintingPipeLineScheme):
             safety_checker=None,
             feature_extractor=None,
         ).to(self.device)
-        return p(**dataclasses.asdict(pipe_in)).images[0]
+
+    def pipe(self, pipe_in: InpaintPipelineInput):
+        image = self.p(prompt=pipe_in.prompt, image=pipe_in.init_image, mask_image=pipe_in.mask_image).images[0]
+        return image
 
 
 if __name__ == "__main__":
