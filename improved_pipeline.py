@@ -6,4 +6,4 @@ class ImprovedInpaintPipeline(InpaintPipeline):
         super().__init__()
 
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        
+        pass
