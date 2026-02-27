@@ -1,12 +1,22 @@
-from vanilla_pipeline import InpaintPipeline
+from vanilla_pipeline import InpaintPipeline, InpaintPipelineInput
 import torch
 import numpy as np
 import cv2 as cv
+from PIL import Image
+
+
+def mask_op(image):
+    mask_np = np.array(image)
+    kernel = np.ones((3, 3), np.uint8)
+    mask_np = cv.dilate(mask_np, kernel, iterations=1)
+    mask_np = cv.GaussianBlur(mask_np, (5, 5), 0)
+    return Image.fromarray(mask_np).resize((64, 64), Image.LANCZOS)
 
 
 class ImprovedInpaintPipeline(InpaintPipeline):
     def __init__(self):
         super().__init__()
+        InpaintPipelineInput.MASK_DEFAULT_PREPROC_OP = mask_op
     
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
@@ -45,10 +55,6 @@ class ImprovedInpaintPipeline(InpaintPipeline):
             
     def prepare_mask_tensor(self, mask_image):
         mask_np = np.array(mask_image)
-        kernel = np.ones((3, 3), np.uint8)
-        mask_np = cv.dilate(mask_np, kernel, iterations=1)
-        mask_np = cv.GaussianBlur(mask_np, (5, 5), 0)
-
         mask_np = mask_np.astype(np.float32) / 255.0
         mask_tensor = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(self.device)
         return mask_tensor

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, Any, Callable
 from diffusers import (
     UNet2DConditionModel,
     AutoencoderKL,
@@ -13,20 +13,22 @@ import torch
 from tqdm import tqdm
 
 
-@dataclass
 class InpaintPipelineInput:
-    prompt: str
-    init_image: Union[Image.Image, str]
-    mask_image: Union[Image.Image, str]
+    MASK_DEFAULT_PREPROC_OP = lambda mask_image: mask_image.resize((64, 64), Image.LANCZOS)
 
-    def __post_init__(self):
+    def __init__(self, prompt, init_image, mask_image, mask_op=MASK_DEFAULT_PREPROC_OP):
+        self.prompt = prompt
+        self.init_image = init_image
+        self.mask_image = mask_image
+
         if isinstance(self.init_image, str):
             self.init_image = Image.open(self.init_image)
         self.init_image = self.init_image.convert("RGB").resize((512, 512))
 
         if isinstance(self.mask_image, str):
             self.mask_image = Image.open(self.mask_image)
-        self.mask_image = self.mask_image.convert("L").resize((64, 64), resample=Image.NEAREST)     # prevents blur
+        self.mask_image = self.mask_image.convert("L")
+        self.mask_image = mask_op(self.mask_image)
 
 
 class SD2InpaintingPipeLineScheme(ABC):
@@ -43,7 +45,7 @@ class SD2InpaintingPipeLineScheme(ABC):
                                                      torch_dtype=torch.float32).to(device)
         tokenizer = CLIPTokenizer.from_pretrained(model_path, subfolder="tokenizer")
         scheduler = DDPMScheduler.from_pretrained(model_path, subfolder="scheduler", torch_dtype=torch.float32)
-        print('Componenets loaded successfully')
+        print('Components loaded successfully')
         return vae, unet, text_encoder, tokenizer, scheduler
 
     @abstractmethod
