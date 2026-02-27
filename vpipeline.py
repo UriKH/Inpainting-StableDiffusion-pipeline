@@ -54,6 +54,8 @@ class PipeLine:
     def apply_multiple(self, dir_in: str, dir_out: str):
         file_names = {file.split('.')[0] for file in os.listdir(dir_in)}
         for name in file_names:
+            if len(name) == 0:
+                continue
             prompt = None
             with open(os.path.join(dir_in, name, '.txt'), "r") as f:
                 prompt = f.read()
