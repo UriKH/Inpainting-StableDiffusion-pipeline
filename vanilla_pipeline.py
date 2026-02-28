@@ -3,6 +3,8 @@ from pipeline import SD2InpaintingPipeLineScheme, InpaintPipelineInput
 import torch
 import numpy as np
 from PIL import Image
+from tqdm import tqdm
+import torch_utils as utils
 
 
 class InpaintPipeline(SD2InpaintingPipeLineScheme):
@@ -52,7 +54,7 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
         latents = torch.randn_like(init_latents)
 
-        for i, t in enumerate(self.scheduler.timesteps):
+        for i, t in tqdm(enumerate(self.scheduler.timesteps)):
             # Expand latents for classifier free guidance
             latent_model_input = torch.cat([latents] * 2)
             latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
@@ -89,4 +91,5 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
         mask = self.prepare_mask_tensor(pipe_in.mask_image)
         latents = self.denoise(text_embeddings, latents, mask)
         final_image = self.decode_latents(latents)
+        utils.clear_cache()
         return final_image

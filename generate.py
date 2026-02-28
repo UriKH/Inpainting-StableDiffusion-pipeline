@@ -6,15 +6,7 @@ from improved_pipeline import ImprovedInpaintPipeline as ImprovedPipeLine
 import torch
 
 import argparse
-
-
-def clear_cache():
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
-
-def print_buffer(msg):
-    print(f'{"=" * 20} {msg} {"=" * 20}')
+import torch_utils as utils
 
 
 if __name__ == "__main__":
@@ -28,24 +20,28 @@ if __name__ == "__main__":
 
     name = args.path.split(os.path.sep)[-1]
 
+    utils.clear_cache()
+
     if args.vanilla:
-        print_buffer('Generate using Vanilla Pipeline')
+        utils.print_title('Generate using Vanilla Pipeline')
         p = VanillaPipeLine()
         p.apply_multiple(args.path, rf'./data/ours/{name}_results_vanilla')
     
         del p
-        clear_cache()
+        utils.clear_cache()
         
     if args.basic:
-        print_buffer('Generate using Ready-Made Pipeline')
+        utils.print_title('Generate using Ready-Made Pipeline')
         p = ReadyPipeLine()
         p.apply_multiple(args.path, rf'./data/ours/{name}_results_ready_made')
 
         del p
-        clear_cache()
+        utils.clear_cache()
 
     if args.improved:
-        print_buffer('Generate using Improved Pipeline')
+        utils.print_title('Generate using Improved Pipeline')
         p = ImprovedPipeLine()
         p.apply_multiple(args.path, rf'./data/ours/{name}_results_improved')
-
+    
+        del p
+        utils.clear_cache()
