@@ -14,12 +14,15 @@ from tqdm import tqdm
 
 
 class InpaintPipelineInput:
-    MASK_DEFAULT_PREPROC_OP = lambda mask_image: mask_image.resize((64, 64), Image.LANCZOS)
+    MASK_DEFAULT_PREPROC_OP = staticmethod(lambda mask_image: mask_image.resize((64, 64), Image.LANCZOS))
 
-    def __init__(self, prompt, init_image, mask_image, mask_op=MASK_DEFAULT_PREPROC_OP):
+    def __init__(self, prompt, init_image, mask_image, mask_op=None):
         self.prompt = prompt
         self.init_image = init_image
         self.mask_image = mask_image
+
+        if mask_op is None:
+            mask_op = self.__class__.MASK_DEFAULT_PREPROC_OP
 
         if isinstance(self.init_image, str):
             self.init_image = Image.open(self.init_image)

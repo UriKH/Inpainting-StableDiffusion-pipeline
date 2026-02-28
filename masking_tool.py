@@ -121,8 +121,7 @@ def run_masking_tool(image_path, output_dir):
                 x, y, roi_w, roi_h = roi
 
                 if roi_w > 0 and roi_h > 0:
-                    side = min(roi_w, roi_h)
-                    mask[y:y + side, x:x + side] = 255 * np.ones_like(mask)[y:y + side, x:x + side]
+                    mask[y:y + roi_h, x:x + roi_w] = 255
                     print("Selected successfully!")
                     break
             cv.imwrite(crop_name, img)
