@@ -87,9 +87,13 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
     @torch.no_grad()
     def pipe(self, pipe_in: InpaintPipelineInput):
         text_embeddings = self.encode_prompt(pipe_in.prompt, self.text_encoder, self.tokenizer)
+        utils.clear_cache()
         latents = self.prepare_latents(pipe_in.init_image)
+        utils.clear_cache()
         mask = self.prepare_mask_tensor(pipe_in.mask_image)
+        utils.clear_cache()
         latents = self.denoise(text_embeddings, latents, mask)
+        utils.clear_cache()
         final_image = self.decode_latents(latents)
         utils.clear_cache()
         return final_image
