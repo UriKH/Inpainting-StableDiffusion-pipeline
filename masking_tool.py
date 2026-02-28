@@ -106,9 +106,27 @@ def run_masking_tool(image_path, output_dir):
         elif key == ord('c'):
             display_img = img.copy()
             mask = np.zeros((512, 512, 3), dtype=np.uint8)
+            cv.setMouseCallback('Draw Your Mask', draw_mask)
             print("Cleared mask.")
         elif key == ord('q'):
             print("Quit without saving.")
+            break
+        elif key == ord('r'):
+            display_img = img.copy()
+            mask = np.zeros((512, 512, 3), dtype=np.uint8)
+            while True:
+                roi = cv.selectROI("Select rectangular mask (Press Enter when done)", img, fromCenter=False,
+                                   showCrosshair=True)
+                cv.destroyWindow("Select rectangular mask (Press Enter when done)")
+                x, y, roi_w, roi_h = roi
+
+                if roi_w > 0 and roi_h > 0:
+                    side = min(roi_w, roi_h)
+                    mask[y:y + side, x:x + side] = 255 * np.ones_like(mask)[y:y + side, x:x + side]
+                    print("Selected successfully!")
+                    break
+            cv.imwrite(crop_name, img)
+            cv.imwrite(mask_name, mask)
             break
 
     cv.destroyAllWindows()

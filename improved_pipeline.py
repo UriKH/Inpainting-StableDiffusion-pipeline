@@ -8,6 +8,7 @@ from PIL import Image
 def mask_op(image):
     mask_np = np.array(image)
     kernel = np.ones((3, 3), np.uint8)
+    _, mask_np = cv.threshold(mask_np, 127, 255, cv.THRESH_BINARY)
     mask_np = cv.dilate(mask_np, kernel, iterations=1)
     mask_np = cv.GaussianBlur(mask_np, (5, 5), 0)
     return Image.fromarray(mask_np).resize((64, 64), Image.LANCZOS)
