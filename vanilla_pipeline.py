@@ -54,7 +54,7 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
         latents = torch.randn_like(init_latents)
 
-        for i, t in tqdm(enumerate(self.scheduler.timesteps)):
+        for i, t in enumerate(self.scheduler.timesteps):
             # Expand latents for classifier free guidance
             latent_model_input = torch.cat([latents] * 2)
             latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
