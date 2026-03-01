@@ -57,8 +57,9 @@ class ImprovedInpaintPipeline(InpaintPipeline):
                 blended_latents = (noisy_background * (1 - mask_tensor)) + (latents_t_next * mask_tensor)
 
                 if j < self.resampling_jumps - 1:
-                    jump_noise = torch.randn_like(init_latents)
-                    latents = self.scheduler.add_noise(blended_latents, jump_noise, t)
+                    beta_t = self.scheduler.betas[t].to(self.device)
+                    jump_noise = torch.randn_like(blended_latents)
+                    latents = torch.sqrt(1 - beta_t) * blended_latents + torch.sqrt(beta_t) * jump_noise
                 else:
                     latents = blended_latents
         return latents
