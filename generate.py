@@ -14,6 +14,9 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--vanilla", action='store_true', help="Folder path to save the resulting images.")
     parser.add_argument("-b", "--basic", action='store_true', help="Folder path to save the resulting images.")
     parser.add_argument("-i", "--improved", action='store_true', help="Folder path to save the resulting images.")
+    parser.add_argument("--blur", default='1')
+    parser.add_argument("--dilate", default='1')
+    parser.add_argument("--resample", default='1')
     parser.add_argument("path", help="Path to the input images.")
 
     args = parser.parse_args()
@@ -40,7 +43,7 @@ if __name__ == "__main__":
 
     if args.improved:
         utils.print_title('Generate using Improved Pipeline')
-        p = ImprovedPipeLine()
+        p = ImprovedPipeLine(int(args.blur), int(args.dilate), int(args.resample))
         p.apply_multiple(args.path, rf'./data/ours/{name}_results_improved')
     
         del p
