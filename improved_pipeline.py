@@ -12,7 +12,8 @@ def mask_op(image, dilate_kernel, kernel_size):
     if dilate_kernel != 1:
         kernel = np.ones((dilate_kernel, dilate_kernel), np.uint8)
         mask_np = cv.dilate(mask_np, kernel, iterations=1)
-    mask_np = cv.GaussianBlur(mask_np, (kernel_size, kernel_size), 0)
+    if kernel_size != 1:
+        mask_np = cv.GaussianBlur(mask_np, (kernel_size, kernel_size), 0)
     return Image.fromarray(mask_np).resize((64, 64), Image.LANCZOS)
 
 
