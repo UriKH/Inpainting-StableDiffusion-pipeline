@@ -50,11 +50,11 @@ class ImprovedInpaintPipeline(InpaintPipeline):
             # Calculate how much to blur based on how far along we are in the loop.
             # It starts at sigma=5.0 (very blurry) and drops to sigma=0.1 (basically binary)
             progress = i / len(self.scheduler.timesteps)
-            current_sigma = max(0.1, 5.0 * (1.0 - progress))
+            current_sigma = max(0.1, 2.0 * (1.0 - progress))
             
             # Apply the dynamic blur to the base mask tensor
             # We use an odd kernel size (15) and our decaying sigma
-            dynamic_mask = TF.gaussian_blur(mask_tensor, kernel_size=15, sigma=current_sigma)
+            dynamic_mask = TF.gaussian_blur(mask_tensor, kernel_size=7, sigma=current_sigma)
 
             # Blend using the dynamic mask!
             noise = torch.randn_like(init_latents)
