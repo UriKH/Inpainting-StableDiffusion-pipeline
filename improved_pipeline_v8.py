@@ -24,7 +24,7 @@ class ImprovedInpaintPipeline(InpaintPipeline):
         self.__class__.MASK_DEFAULT_PREPROC_OP = staticmethod(mask_op)
 
         # Use special values found in FreeU paper
-        self.unet.enable_freeu(s1=0.9, s2=0.2, b1=1.2, b2=1.4)
+        self.unet.enable_freeu(s1=0.9, s2=0.2, b1=1.4, b2=1.6)
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
