@@ -30,7 +30,7 @@ if __name__ == "__main__":
     if args.vanilla:
         utils.print_title('Generate using Vanilla Pipeline')
         p = VanillaPipeLine()
-        p.apply_multiple(args.path, rf'./data/{dataset_type}/{name}_results_vanilla')
+        p.apply_multiple(args.path, rf'./data/{dataset_type}/{name}_results_vanilla', is_coco=args.coco, num_coco=args.num)
     
         del p
         utils.clear_cache()
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if args.basic:
         utils.print_title('Generate using Ready-Made Pipeline')
         p = ReadyPipeLine()
-        p.apply_multiple(args.path, rf'./data/{dataset_type}/{name}_results_ready_made')
+        p.apply_multiple(args.path, rf'./data/{dataset_type}/{name}_results_ready_made', is_coco=args.coco, num_coco=args.num)
 
         del p
         utils.clear_cache()
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     if args.improved:
         utils.print_title('Generate using Improved Pipeline')
         p = ImprovedPipeLine() #(int(args.blur), int(args.dilate), int(args.resample))
-        p.apply_multiple(args.path, rf'./data/{dataset_type}/{name}_results_improved')
+        p.apply_multiple(args.path, rf'./data/{dataset_type}/{name}_results_improved', is_coco=args.coco, num_coco=args.num)
     
         del p
         utils.clear_cache()
