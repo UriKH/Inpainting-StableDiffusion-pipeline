@@ -2,7 +2,7 @@ import os
 
 from vanilla_pipeline import InpaintPipeline as VanillaPipeLine
 from ready_pipeline import PipeLine as ReadyPipeLine
-from improved_pipeline import ImprovedInpaintPipeline as ImprovedPipeLine
+from improved_pipeline_v3 import ImprovedInpaintPipeline as ImprovedPipeLine
 import torch
 
 import argparse
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     if args.improved:
         utils.print_title('Generate using Improved Pipeline')
-        p = ImprovedPipeLine(int(args.blur), int(args.dilate), int(args.resample))
+        p = ImprovedPipeLine() #(int(args.blur), int(args.dilate), int(args.resample))
         p.apply_multiple(args.path, rf'./data/ours/{name}_results_improved')
     
         del p
