@@ -2,7 +2,7 @@ import os
 
 from vanilla_pipeline import InpaintPipeline as VanillaPipeLine
 from ready_pipeline import PipeLine as ReadyPipeLine
-from improved_pipeline_v3 import ImprovedInpaintPipeline as ImprovedPipeLine
+from improved_pipeline_v4 import ImprovedInpaintPipeline as ImprovedPipeLine
 import torch
 
 import argparse
