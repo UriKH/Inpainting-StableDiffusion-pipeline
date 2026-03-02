@@ -20,7 +20,7 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
             prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt"
         )
         text_embeddings = text_encoder(text_input.input_ids.to(self.device))[0]
-        uncond_input = tokenizer([""], padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt")
+        uncond_input = tokenizer(["ugly, tiling, poorly drawn, out of frame, deformed, blurry, bad anatomy, bad proportions, extra limbs, artifacts"], padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt")
         uncond_embeddings = text_encoder(uncond_input.input_ids.to(self.device))[0]
         text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
         return text_embeddings
