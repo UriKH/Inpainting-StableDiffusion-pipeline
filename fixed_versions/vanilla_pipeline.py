@@ -37,6 +37,7 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
     def prepare_mask_tensor(self, mask_image):
         mask_np = np.array(mask_image).astype(np.float32) / 255.0
         mask_tensor = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(self.device)
+        mask_tensor = torch.nn.functional.interpolate(mask_tensor, size=(64, 64), mode='nearest')
         return mask_tensor
 
     def decode_latents(self, latents) -> Image.Image:
@@ -53,7 +54,9 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
-        latents = torch.randn_like(init_latents)
+        noise = torch.randn_like(init_latents)
+        latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
+                   + (noise * mask_tensor))
 
         for i, t in enumerate(self.scheduler.timesteps):
             # Expand latents for classifier free guidance
