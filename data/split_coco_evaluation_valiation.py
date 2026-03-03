@@ -2,6 +2,7 @@ import os
 import random
 import shutil
 
+
 def split_folder_data(source_folder, eval_folder, val_folder, split_ratio=0.9):
     # 1. Ensure the source folder exists
     if not os.path.exists(source_folder):
