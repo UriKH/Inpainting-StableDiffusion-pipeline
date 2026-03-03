@@ -49,7 +49,6 @@ class ImprovedInpaintPipeline(InpaintPipeline):
                 # Step the scheduler
                 latents_t_next = self.scheduler.step(noise_pred, t, latents).prev_sample
 
-
                 # 1. Add noise to the original image matching the level we JUST stepped to
                 noise = torch.randn_like(init_latents)
                 noisy_background = self.scheduler.add_noise(init_latents, noise, t_next)
