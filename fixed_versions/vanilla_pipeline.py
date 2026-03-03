@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-import torch_utils as utils
+from utils import torch_utils as utils
 
 
 class InpaintPipeline(SD2InpaintingPipeLineScheme):

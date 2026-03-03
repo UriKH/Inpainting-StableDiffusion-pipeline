@@ -6,7 +6,7 @@ from vanilla_pipeline import InpaintPipeline
 import torch
 
 import argparse
-import torch_utils as utils
+from utils.printing import print_title
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="data generation tool")
@@ -16,6 +16,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     name = args.path_in.split(os.path.sep)[-1]
 
-    utils.print_title('Generate using Vanilla Pipeline')
+    print_title('Generate using Vanilla Pipeline')
     p = InpaintPipeline()
     p.apply_multiple(args.path_in, args.path_out)

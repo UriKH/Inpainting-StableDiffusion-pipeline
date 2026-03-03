@@ -6,7 +6,8 @@ from old.improved_pipeline_v8 import ImprovedInpaintPipeline as ImprovedPipeLine
 import torch
 
 import argparse
-from old import torch_utils as utils
+from utils.printing import print_title
+from utils.torch_utils import clear_cache
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="data generation tool")
@@ -24,28 +25,28 @@ if __name__ == "__main__":
     name = args.path.split(os.path.sep)[-1]
     dataset_type = "coco" if args.coco else "ours"
 
-    utils.clear_cache()
+    clear_cache()
 
     if args.vanilla:
-        utils.print_title('Generate using Vanilla Pipeline')
+        print_title('Generate using Vanilla Pipeline')
         p = VanillaPipeLine()
         p.apply_multiple(args.path, rf'./data/{dataset_type}/{name}_results_vanilla', is_coco=args.coco, num_coco=args.num)
     
         del p
-        utils.clear_cache()
+        clear_cache()
         
     if args.basic:
-        utils.print_title('Generate using Ready-Made Pipeline')
+        print_title('Generate using Ready-Made Pipeline')
         p = ReadyPipeLine()
         p.apply_multiple(args.path, rf'./data/{dataset_type}/{name}_results_ready_made', is_coco=args.coco, num_coco=args.num)
 
         del p
-        utils.clear_cache()
+        clear_cache()
 
     if args.improved:
-        utils.print_title('Generate using Improved Pipeline')
+        print_title('Generate using Improved Pipeline')
         p = ImprovedPipeLine() #(int(args.blur), int(args.dilate), int(args.resample))
         p.apply_multiple(args.path, rf'./data/{dataset_type}/{name}_results_improved', is_coco=args.coco, num_coco=args.num)
     
         del p
-        utils.clear_cache()
+        clear_cache()
