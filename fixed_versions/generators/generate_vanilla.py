@@ -2,11 +2,11 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from old.vanilla_pipeline import InpaintPipeline
+from vanilla_pipeline import InpaintPipeline
 import torch
 
 import argparse
-from old import torch_utils as utils
+import torch_utils as utils
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="data generation tool")
