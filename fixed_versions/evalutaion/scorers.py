@@ -1,0 +1,65 @@
+import torch
+from torchmetrics.image.fid import FrechetInceptionDistance
+from torchmetrics.multimodal.clip_score import CLIPScore
+from torchmetrics.image import StructuralSimilarityIndexMeasure
+from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
+from torchvision.transforms import ToTensor
+from PIL import Image
+
+
+class InpaintingEvaluator:
+    def __init__(self, device="cuda"):
+        self.device = device
+
+        # Distribution / Realism Metric
+        self.fid = FrechetInceptionDistance(feature=2048, normalize=True).to(self.device)
+
+        # Text-Alignment Metric
+        self.clip_score = CLIPScore(model_name_or_path="openai/clip-vit-base-patch16").to(self.device)
+
+        # Reconstruction Metrics
+        # data_range=1.0 because ToTensor() scales images to [0.0, 1.0]
+        self.ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(self.device)
+
+        # normalize=True tells LPIPS to expect [0.0, 1.0] inputs instead of [-1.0, 1.0]
+        self.lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg', normalize=True).to(self.device)
+
+    def preprocess_image(self, pil_image: Image.Image) -> torch.Tensor:
+        """Converts PIL Image to the format expected by torchmetrics (1, C, H, W) float tensor [0.0, 1.0]"""
+        tensor = ToTensor()(pil_image)
+        return tensor.unsqueeze(0).to(self.device)
+
+    def update_fid_clip(self, real_image: Image.Image, generated_image: Image.Image, prompt: str):
+        """Updates the FID and CLIP Score states."""
+        real_tensor = self.preprocess_image(real_image)
+        gen_tensor = self.preprocess_image(generated_image)
+
+        self.fid.update(real_tensor, real=True)
+        self.fid.update(gen_tensor, real=False)
+        self.clip_score.update(gen_tensor, [prompt])
+
+    def update_reconstruction(self, real_image: Image.Image, generated_image: Image.Image):
+        """Updates the SSIM and LPIPS states with a 1-to-1 image comparison."""
+        real_tensor = self.preprocess_image(real_image)
+        gen_tensor = self.preprocess_image(generated_image)
+
+        self.ssim.update(gen_tensor, real_tensor)
+        self.lpips.update(gen_tensor, real_tensor)
+
+    def compute_metrics(self) -> dict:
+        """Calculates and returns the final scores across all updated images."""
+        print("Computing final metrics... this might take a moment.")
+
+        results = {
+            "FID": float(self.fid.compute()),
+            "CLIP Score": float(self.clip_score.compute()),
+            "SSIM": float(self.ssim.compute()),
+            "LPIPS": float(self.lpips.compute())
+        }
+
+        # Reset states for the next run
+        self.fid.reset()
+        self.clip_score.reset()
+        self.ssim.reset()
+        self.lpips.reset()
+        return results

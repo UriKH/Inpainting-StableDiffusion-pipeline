@@ -1,5 +1,5 @@
-from ..vanilla_pipeline import InpaintPipeline
-from .coco_runner import COCODatasetGenerator
+from fixed_versions.vanilla_pipeline import InpaintPipeline
+from coco_runner import COCODatasetGenerator
 from utils.getters import input_output_paths_args
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
 
