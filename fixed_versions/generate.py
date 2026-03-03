@@ -1,13 +1,12 @@
 import os
 
-from vanilla_pipeline import InpaintPipeline as VanillaPipeLine
-from ready_pipeline import PipeLine as ReadyPipeLine
-from improved_pipeline_v8 import ImprovedInpaintPipeline as ImprovedPipeLine
+from old.vanilla_pipeline import InpaintPipeline as VanillaPipeLine
+from old.ready_pipeline import PipeLine as ReadyPipeLine
+from old.improved_pipeline_v8 import ImprovedInpaintPipeline as ImprovedPipeLine
 import torch
 
 import argparse
-import torch_utils as utils
-
+from old import torch_utils as utils
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="data generation tool")

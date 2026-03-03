@@ -47,6 +47,7 @@ def split_folder_data(source_folder, eval_folder, val_folder, split_ratio=0.9):
 
     print("Done! Files successfully split into disjoint sets.")
 
+
 # --- Example Usage ---
 if __name__ == "__main__":
     # Update these paths to match your local setup

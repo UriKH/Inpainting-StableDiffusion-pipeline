@@ -1,4 +1,4 @@
-from vanilla_pipeline import InpaintPipeline
+from old.vanilla_pipeline import InpaintPipeline
 import torch
 import torch.nn.functional as F
 import numpy as np

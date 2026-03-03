@@ -3,7 +3,7 @@ import importlib.util
 from pathlib import Path
 from PIL import Image
 import numpy as np
-from ..pipeline import InpaintPipelineInput
+from old.pipeline import InpaintPipelineInput
 
 # Import the official COCO API
 from pycocotools.coco import COCO

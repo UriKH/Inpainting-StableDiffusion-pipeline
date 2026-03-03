@@ -1,10 +1,10 @@
-from pipeline import SD2InpaintingPipeLineScheme, InpaintPipelineInput
+from old.pipeline import SD2InpaintingPipeLineScheme, InpaintPipelineInput
 
 import torch
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-import torch_utils as utils
+from old import torch_utils as utils
 
 
 class InpaintPipeline(SD2InpaintingPipeLineScheme):
