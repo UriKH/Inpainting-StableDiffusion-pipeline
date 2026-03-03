@@ -52,7 +52,7 @@ def split_folder_data(source_folder, eval_folder, val_folder, split_ratio=0.9):
 if __name__ == "__main__":
     # Update these paths to match your local setup
     SOURCE_DIR = "../data/coco/val2017_subset"
-    EVAL_DIR = "./coco/evaluation"
-    VAL_DIR = "./coco/validation"
+    EVAL_DIR = "../data/coco/evaluation"
+    VAL_DIR = "../data/coco/validation"
     
-    split_folder_data(SOURCE_DIR, EVAL_DIR, VAL_DIR, split_ratio=0.9)
+    split_folder_data(SOURCE_DIR, EVAL_DIR, VAL_DIR, split_ratio=0.85)
