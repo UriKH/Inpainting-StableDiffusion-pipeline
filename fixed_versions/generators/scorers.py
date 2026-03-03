@@ -7,7 +7,7 @@ from torchvision.transforms import ToTensor
 from PIL import Image
 
 
-class InpaintingEvaluator:
+class Scorer:
     def __init__(self, device="cuda"):
         self.device = device
 
