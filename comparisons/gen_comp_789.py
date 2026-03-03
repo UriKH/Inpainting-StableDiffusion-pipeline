@@ -19,6 +19,7 @@ def load_pipeline_class(filepath):
     spec.loader.exec_module(module)
     return module.ImprovedInpaintPipeline
 
+
 # 3. The Main Evaluation Loop
 def run_coco_benchmark(pipelines_dir, val_images_dir, annotations_dir, output_dir):
     print(f'>>> Running benchmarks... <<<')

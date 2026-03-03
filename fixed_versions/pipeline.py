@@ -15,14 +15,12 @@ import numpy as np
 class InpaintPipelineInput:
     # Use NEAREST to keep masks strictly binary, and target 512x512
     MASK_DEFAULT_PREPROC_OP = staticmethod(lambda mask_image: mask_image)
+    IMAGE_DEFAULT_PREPROC_OP = staticmethod(lambda image: image)
 
-    def __init__(self, prompt, init_image, mask_image, mask_op=None):
+    def __init__(self, prompt, init_image, mask_image):
         self.prompt = prompt
         self.init_image = init_image
         self.mask_image = mask_image
-
-        if mask_op is None:
-            mask_op = self.__class__.MASK_DEFAULT_PREPROC_OP
 
         if isinstance(self.init_image, str):
             self.init_image = Image.open(self.init_image)
@@ -34,7 +32,6 @@ class InpaintPipelineInput:
             self.mask_image = Image.open(self.mask_image)
             
         self.mask_image = self.mask_image.convert("L")
-        self.mask_image = mask_op(self.mask_image)
 
         # make sure there is no information leakage
         img_arr = np.array(self.init_image)

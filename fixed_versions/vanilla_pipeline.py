@@ -19,7 +19,6 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
             prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt"
         )
         text_embeddings = text_encoder(text_input.input_ids.to(self.device))[0]
-        # uncond_input = tokenizer(["ugly, tiling, poorly drawn, out of frame, deformed, blurry, bad anatomy, bad proportions, extra limbs, artifacts"], padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt")
         uncond_input = tokenizer([""], padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt")
         uncond_embeddings = text_encoder(uncond_input.input_ids.to(self.device))[0]
         text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
@@ -86,9 +85,21 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
             # 2. Blend the accurately aligned latents
             latents = (noisy_init_latents * (1 - mask_tensor)) + (latents * mask_tensor)
         return latents
-    
+
+    def mask_preprocessing(self, mask_image):
+        return mask_image
+
+    def image_preprocessing(self, real_image, mask_image):
+        return real_image
+
+    def preprocess(self, pipe_in: InpaintPipelineInput):
+        pipe_in.mask_image = self.mask_preprocessing(pipe_in.mask_image)
+        pipe_in.init_image = self.image_preprocessing(pipe_in.init_image, pipe_in.mask_image)
+        return pipe_in
+
     @torch.no_grad()
     def pipe(self, pipe_in: InpaintPipelineInput):
+        pipe_in = self.preprocess(pipe_in)
         text_embeddings = self.encode_prompt(pipe_in.prompt, self.text_encoder, self.tokenizer)
         utils.clear_cache()
         latents = self.prepare_latents(pipe_in.init_image)

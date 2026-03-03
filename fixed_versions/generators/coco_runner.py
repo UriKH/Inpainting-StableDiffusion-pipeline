@@ -3,7 +3,7 @@ import sys
 import json
 from PIL import Image, ImageDraw
 from tqdm import tqdm
-
+from typing import Tuple
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -12,9 +12,8 @@ from pipeline import InpaintPipelineInput
 
 
 class COCODatasetGenerator:
-    def __init__(self, instances_json_path, captions_json_path, pipeline):
+    def __init__(self, instances_json_path, captions_json_path):
         self.img_filename_to_id, self.img_id_to_ann, self.cat_id_to_name, self.img_id_to_caption = self.__load_coco_data(instances_json_path, captions_json_path)
-        self.pipeline = pipeline
 
     @staticmethod
     def __load_coco_data(instances_json_path, captions_json_path):
@@ -41,47 +40,41 @@ class COCODatasetGenerator:
                 img_id_to_caption[cap['image_id']] = cap['caption'].strip().rstrip('.')
         return img_filename_to_id, img_id_to_ann, cat_id_to_name, img_id_to_caption
 
-    def generate(self, input_path, output_dir):
+    def generate(self, input_path, output_dir, pipeline):
         os.makedirs(output_dir, exist_ok=True)
 
         image_files = [f for f in os.listdir(input_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-        image_files = image_files[:150]
 
         for filename in tqdm(image_files, desc="Processing COCO validation images"):
-            if filename not in self.img_filename_to_id:
-                continue
-
-            img_id = self.img_filename_to_id[filename]
-            # נוודא שיש לנו גם אובייקט וגם תיאור לתמונה הזו
-            if img_id not in self.img_id_to_ann or img_id not in self.img_id_to_caption:
-                continue
-
-            # 1. חילוץ המידע מה-JSON
-            ann = self.img_id_to_ann[img_id]
-            bbox = ann['bbox']
-            category_name = self.cat_id_to_name[ann['category_id']]
-            global_caption = self.img_id_to_caption[img_id]
-
-            # 2. יצירת הפרומפט החדש בתבנית המבוקשת
-            prompt = f"{category_name}, perfectly integrated into a scene of {global_caption}"
-
-            # 3. טעינת התמונה המקורית
             img_path = os.path.join(input_path, filename)
             init_image = Image.open(img_path).convert("RGB")
-
-            # 4. יצירת מסיכה מלבנית
+            prompt, bbox = self.get_mask_prompt(img_path)
             mask_image = Image.new("L", init_image.size, 0)
             draw = ImageDraw.Draw(mask_image)
             x, y, w, h = bbox
             draw.rectangle([x, y, x + w, y + h], fill=255)
 
-            # 5. הכנת האובייקט להרצה בפייפליין
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)
+            result_img = pipeline.resize_pipe(pipe_in)
 
-            # 6. הרצת המודל
-            result_img = self.pipeline.resize_pipe(pipe_in)
-
-            # 7. שמירת התוצאה
             out_path = os.path.join(output_dir, f"vanilla_{filename}")
             result_img.save(out_path)
 
+    def get_mask_prompt(self, image_path) -> Tuple[str, Image.Image]:
+        filename = os.path.basename(image_path)
+        if filename not in self.img_filename_to_id:
+            raise ValueError(f"Image {filename} not found in the dataset.")
+
+        img_id = self.img_filename_to_id[filename]
+        if img_id not in self.img_id_to_ann or img_id not in self.img_id_to_caption:
+            raise ValueError(f"No annotations found for image {filename}.")
+
+        # 1. חילוץ המידע מה-JSON
+        ann = self.img_id_to_ann[img_id]
+        bbox = ann['bbox']
+        category_name = self.cat_id_to_name[ann['category_id']]
+        global_caption = self.img_id_to_caption[img_id]
+
+        # 2. יצירת הפרומפט החדש בתבנית המבוקשת
+        prompt = f"{category_name}, perfectly integrated into a scene of {global_caption}"
+        return prompt, bbox

@@ -6,8 +6,17 @@ from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from torchvision.transforms import ToTensor
 from PIL import Image
 
+from fixed_versions.generators.coco_runner import COCODatasetGenerator
+from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
 
-class Scorer:
+
+class COCOInpaintingMetricsScorer:
+    FID = 'FID'
+    SSIM = 'SSIM'
+    LPIPS = 'LPIPS'
+    CLIP_SCORE = 'CLIP score'
+    METRICS = [FID, SSIM, LPIPS, CLIP_SCORE]
+
     def __init__(self, device="cuda"):
         self.device = device
 
@@ -23,6 +32,7 @@ class Scorer:
 
         # normalize=True tells LPIPS to expect [0.0, 1.0] inputs instead of [-1.0, 1.0]
         self.lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg', normalize=True).to(self.device)
+        self.coco_manager = COCODatasetGenerator(COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH)
 
     def preprocess_image(self, pil_image: Image.Image) -> torch.Tensor:
         """Converts PIL Image to the format expected by torchmetrics (1, C, H, W) float tensor [0.0, 1.0]"""
@@ -51,10 +61,10 @@ class Scorer:
         print("Computing final metrics... this might take a moment.")
 
         results = {
-            "FID": float(self.fid.compute()),
-            "CLIP Score": float(self.clip_score.compute()),
-            "SSIM": float(self.ssim.compute()),
-            "LPIPS": float(self.lpips.compute())
+            self.FID: float(self.fid.compute()),
+            self.CLIP_SCORE: float(self.clip_score.compute()),
+            self.SSIM: float(self.ssim.compute()),
+            self.LPIPS: float(self.lpips.compute())
         }
 
         # Reset states for the next run
@@ -63,3 +73,14 @@ class Scorer:
         self.ssim.reset()
         self.lpips.reset()
         return results
+
+    def score(self, real_image_path: str, generated_image_path: str):
+        prompt, bbox = self.coco_manager.get_mask_prompt(real_image_path)
+        real_image = Image.open(real_image_path).convert("RGB")
+        generated_image = Image.open(generated_image_path).convert("RGB")
+
+        cropped_real = real_image.crop(bbox)
+        cropped_gen = generated_image.crop(bbox)
+        self.update_fid_clip(real_image, generated_image, prompt)
+        self.update_reconstruction(cropped_real, cropped_gen)
+        return self.compute_metrics()

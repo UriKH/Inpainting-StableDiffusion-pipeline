@@ -19,7 +19,6 @@ if __name__ == "__main__":
     pipeline = InpaintPipeline()
     generator = COCODatasetGenerator(
         COCO_INSTANCES_PATH,
-        COCO_CAPTIONS_PATH,
-        pipeline
+        COCO_CAPTIONS_PATH
     )
-    generator.generate(input_paths, output_paths)
+    generator.generate(input_paths, output_paths, pipeline)
