@@ -1,9 +1,11 @@
 import torch
+import torch.nn.functional as F
 from torchmetrics.image.fid import FrechetInceptionDistance
 from torchmetrics.multimodal.clip_score import CLIPScore
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from torchvision.transforms import ToTensor
+from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
 import sys
 import os
@@ -33,7 +35,10 @@ class COCOInpaintingMetricsScorer:
         self.fid = FrechetInceptionDistance(feature=2048, normalize=True).to(self.device)
 
         # Text-Alignment Metric
-        self.clip_score = CLIPScore(model_name_or_path="openai/clip-vit-base-patch16").to(self.device)
+        print("Loading native Hugging Face CLIP model for robust scoring...")
+        self.clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch16").to(self.device)
+        self.clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch16")
+        self.clip_scores = [] 
 
         # Reconstruction Metrics
         # data_range=1.0 because ToTensor() scales images to [0.0, 1.0]
@@ -55,7 +60,27 @@ class COCOInpaintingMetricsScorer:
 
         self.fid.update(real_tensor, real=True)
         self.fid.update(gen_tensor, real=False)
-        self.clip_score.update(gen_tensor, [prompt])
+        
+        # 2. Calculate mathematical CLIP Score natively
+        inputs = self.clip_processor(text=[prompt], images=generated_image, return_tensors="pt", padding=True)
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+
+        with torch.no_grad():
+            outputs = self.clip_model(**inputs)
+
+            # Extract raw embeddings
+            image_embeds = outputs.image_embeds
+            text_embeds = outputs.text_embeds
+
+            # Normalize to unit vectors
+            image_embeds = F.normalize(image_embeds, p=2, dim=-1)
+            text_embeds = F.normalize(text_embeds, p=2, dim=-1)
+
+            # Calculate cosine similarity and scale by 100
+            cos_sim = torch.sum(image_embeds * text_embeds, dim=-1)
+            score = 100 * torch.max(cos_sim, torch.zeros_like(cos_sim))
+
+            self.clip_scores.append(score.item())
 
     def update_reconstruction(self, real_image: Image.Image, generated_image: Image.Image):
         """Updates the SSIM and LPIPS states with a 1-to-1 image comparison."""
@@ -68,10 +93,12 @@ class COCOInpaintingMetricsScorer:
     def compute_metrics(self) -> dict:
         """Calculates and returns the final scores across all updated images."""
         print("Computing final metrics... this might take a moment.")
+        
+        mean_clip = sum(self.clip_scores) / len(self.clip_scores) if self.clip_scores else 0.0
 
         results = {
             self.FID: float(self.fid.compute()),
-            self.CLIP_SCORE: float(self.clip_score.compute()),
+            self.CLIP_SCORE: float(mean_clip),
             self.SSIM: float(self.ssim.compute()),
             self.LPIPS: float(self.lpips.compute())
         }
@@ -87,9 +114,9 @@ class COCOInpaintingMetricsScorer:
         prompt, bbox = self.coco_manager.get_mask_prompt(real_image_path)
         real_image = Image.open(real_image_path).convert("RGB")
         generated_image = Image.open(generated_image_path).convert("RGB")
-
-        cropped_real = real_image.crop(bbox)
-        cropped_gen = generated_image.crop(bbox)
+        x, y, w, h = bbox
+        cropped_real = real_image.crop((x, y, x + w, y + h))
+        cropped_gen = generated_image.crop((x, y, x + w, y + h))
         self.update_fid_clip(real_image, generated_image, prompt)
         self.update_reconstruction(cropped_real, cropped_gen)
         return self.compute_metrics()
