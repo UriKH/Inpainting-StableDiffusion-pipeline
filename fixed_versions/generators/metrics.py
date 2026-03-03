@@ -5,6 +5,15 @@ from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from torchvision.transforms import ToTensor
 from PIL import Image
+import sys
+import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+fixed_versions_dir = os.path.dirname(current_dir)
+root_dir = os.path.dirname(fixed_versions_dir)
+
+sys.path.append(fixed_versions_dir)
+sys.path.append(root_dir)
 
 from fixed_versions.generators.coco_runner import COCODatasetGenerator
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH

@@ -1,5 +1,6 @@
 import os
 import sys
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 fixed_versions_dir = os.path.dirname(current_dir)
 root_dir = os.path.dirname(fixed_versions_dir)
