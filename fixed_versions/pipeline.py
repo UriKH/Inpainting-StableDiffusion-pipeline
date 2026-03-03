@@ -28,13 +28,13 @@ class InpaintPipelineInput:
             self.init_image = Image.open(self.init_image)
             
         # Warning: Direct resize stretches non-square images! (See COCO practices below)
-        self.init_image = self.init_image.convert("RGB").resize((512, 512), Image.LANCZOS)
+        self.init_image = self.init_image.convert("RGB")
 
         if isinstance(self.mask_image, str):
             self.mask_image = Image.open(self.mask_image)
             
         self.mask_image = self.mask_image.convert("L")
-        self.mask_image = mask_op(self.mask_image).resize((512, 512), Image.NEAREST)
+        self.mask_image = mask_op(self.mask_image)
 
         # make sure there is no information leakage
         img_arr = np.array(self.init_image)
