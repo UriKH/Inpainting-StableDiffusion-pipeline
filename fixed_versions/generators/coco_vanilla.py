@@ -1,13 +1,16 @@
 import os
 import sys
-from coco_runner import COCODatasetGenerator
+current_dir = os.path.dirname(os.path.abspath(__file__))
+fixed_versions_dir = os.path.dirname(current_dir)
+root_dir = os.path.dirname(fixed_versions_dir)
+
+sys.path.append(fixed_versions_dir)
+sys.path.append(root_dir)
+
+from generators.coco_runner import COCODatasetGenerator
 from utils.getters import input_output_paths_args
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
-
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from fixed_versions.vanilla_pipeline import InpaintPipeline
+from vanilla_pipeline import InpaintPipeline
 
 
 if __name__ == "__main__":
