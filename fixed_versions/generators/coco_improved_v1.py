@@ -11,7 +11,7 @@ sys.path.append(root_dir)
 from generators.coco_runner import COCODatasetGenerator
 from utils.getters import input_output_paths_args
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
-from ..v1_improved_pipeline import ImprovedInpaintPipeline
+from v1_improved_pipeline import ImprovedInpaintPipeline
 
 
 if __name__ == "__main__":
