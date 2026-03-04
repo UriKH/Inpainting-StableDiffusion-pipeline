@@ -10,6 +10,7 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
     MODEL_ID = "Manojb/stable-diffusion-2-base"
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     SD_SCALE_FACTOR = 0.18215
+    CFG_SCALE_FACTOR = 7.5
 
     def __init__(self, model_id=MODEL_ID, device=DEVICE):
         super().__init__(model_id, device)
@@ -35,7 +36,9 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
     def prepare_mask_tensor(self, mask_image):
         mask_np = np.array(mask_image).astype(np.float32) / 255.0
         mask_tensor = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(self.device)
-        mask_tensor = torch.nn.functional.interpolate(mask_tensor, size=(64, 64), mode='nearest')
+        latent_height = mask_tensor.shape[2] // 8
+        latent_width = mask_tensor.shape[3] // 8
+        mask_tensor = torch.nn.functional.interpolate(mask_tensor, size=(latent_height, latent_width), mode='nearest')
         return mask_tensor
 
     def decode_latents(self, latents) -> Image.Image:
@@ -53,6 +56,7 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
         noise = torch.randn_like(init_latents)
+
         latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
                    + (noise * mask_tensor))
 
@@ -67,23 +71,24 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
 
             # Perform guidance
             noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-            noise_pred = noise_pred_uncond + 7.5 * (noise_pred_text - noise_pred_uncond)
+            noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
 
             # Step the scheduler
             latents = self.scheduler.step(noise_pred, t, latents).prev_sample
 
-            # --- THE VANILLA INPAINTING MAGIC HAPPENS HERE ---
+            # Update timesteps and add noise
             if i < len(self.scheduler.timesteps) - 1:
                 t_next = self.scheduler.timesteps[i + 1]
+
+                # Add noise to the original image matching the level we JUST stepped to
+                noise = torch.randn_like(init_latents)
+                known_background = self.scheduler.add_noise(init_latents, noise, t_next)
             else:
-                t_next = torch.tensor([0], device=self.device)
+                # At the final step, the known background should be perfectly clean
+                known_background = init_latents
 
-            # 1. Add noise to the original image matching the level we JUST stepped to
-            noise = torch.randn_like(init_latents)
-            noisy_init_latents = self.scheduler.add_noise(init_latents, noise, t_next)
-
-            # 2. Blend the accurately aligned latents
-            latents = (noisy_init_latents * (1 - mask_tensor)) + (latents * mask_tensor)
+            # Blend the accurately aligned latents
+            latents = (known_background * (1 - mask_tensor)) + (latents * mask_tensor)
         return latents
 
     def mask_preprocessing(self, mask_image):
@@ -96,6 +101,9 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
         pipe_in.mask_image = self.mask_preprocessing(pipe_in.mask_image)
         pipe_in.init_image = self.image_preprocessing(pipe_in.init_image, pipe_in.mask_image)
         return pipe_in
+
+    def postprocess(self, image: Image.Image, mask_image: Image.Image):
+        return image
 
     @torch.no_grad()
     def pipe(self, pipe_in: InpaintPipelineInput):
@@ -110,4 +118,4 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
         utils.clear_cache()
         final_image = self.decode_latents(latents)
         utils.clear_cache()
-        return final_image
+        return self.postprocess(final_image, mask)
