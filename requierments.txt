@@ -5,3 +5,4 @@ scipy
 safetensors
 numpy
 opencv-python
+torchmetrics[image]
