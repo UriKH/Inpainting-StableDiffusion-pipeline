@@ -79,7 +79,7 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
                 t_next = torch.tensor([0], device=self.device)
 
             # 1. Add noise to the original image matching the level we JUST stepped to
-            #noise = torch.randn_like(init_latents)
+            noise = torch.randn_like(init_latents)
             noisy_init_latents = self.scheduler.add_noise(init_latents, noise, t_next)
 
             # 2. Blend the accurately aligned latents
