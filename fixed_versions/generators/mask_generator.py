@@ -63,16 +63,4 @@ class MaskGenerator:
 
         # Calculate Coverage Ratio (percentage of image masked)
         coverage_ratio = np.mean(mask_normalized)
-
-        # Expand mask dimensions to match image channels (H, W, 1) -> (H, W, C)
-        mask_expanded = np.expand_dims(mask_normalized, axis=-1)
-
-        # 4. Fill the masked area with Gaussian Noise
-        # Generate pure noise matching the image shape
-        # Assuming the input image is scaled [0, 255]. Adjust if it's [-1, 1].
-        gaussian_noise = rng.normal(loc=127.5, scale=60.0, size=image.shape).clip(0, 255).astype(np.float32)
-
-        # Combine: Keep original pixels where mask is 0, add noise where mask is 1
-        masked_image = (image * (1 - mask_expanded)) + (gaussian_noise * mask_expanded)
-
-        return masked_image.astype(np.uint8), mask_normalized, coverage_ratio
+        return mask, coverage_ratio

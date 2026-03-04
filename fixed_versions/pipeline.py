@@ -32,6 +32,7 @@ class InpaintPipelineInput:
             self.mask_image = Image.open(self.mask_image)
             
         self.mask_image = self.mask_image.convert("L")
+        self.init_image[self.mask_image == 0] = (255, 255, 255)
 
 
 class SD2InpaintingPipeLineScheme(ABC):
