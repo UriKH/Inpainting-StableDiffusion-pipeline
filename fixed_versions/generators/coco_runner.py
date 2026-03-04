@@ -13,6 +13,7 @@ from pipeline import InpaintPipelineInput
 
 class COCODatasetGenerator:
     def __init__(self, instances_json_path, captions_json_path):
+        print('=== lodaing COCO ===')
         self.img_filename_to_id, self.img_id_to_ann, self.cat_id_to_name, self.img_id_to_caption = self.__load_coco_data(instances_json_path, captions_json_path)
 
     @staticmethod
@@ -27,7 +28,7 @@ class COCODatasetGenerator:
         cat_id_to_name = {cat['id']: cat['name'] for cat in instances_data['categories']}
 
         img_id_to_ann = {}
-        for ann in instances_data['annotations']:
+        for ann in tqdm(instances_data['annotations'], desc='loading COCO annotations...'):
             if ann['image_id'] not in img_id_to_ann:
                 img_id_to_ann[ann['image_id']] = ann
 
@@ -35,7 +36,7 @@ class COCODatasetGenerator:
             captions_data = json.load(f)
 
         img_id_to_caption = {}
-        for cap in captions_data['annotations']:
+        for cap in tqdm(captions_data['annotations'], desc='loading COCO captions...'):
             if cap['image_id'] not in img_id_to_caption:
                 img_id_to_caption[cap['image_id']] = cap['caption'].strip().rstrip('.')
         return img_filename_to_id, img_id_to_ann, cat_id_to_name, img_id_to_caption
@@ -51,7 +52,7 @@ class COCODatasetGenerator:
             try:
                 prompt, bbox = self.get_mask_prompt(img_path)
             except Exception as e:
-                print('unexpected error: {e} (continue anyway!)')
+                print(f'unexpected error: {e} (continue anyway!)')
                 continue
             mask_image = Image.new("L", init_image.size, 0)
             draw = ImageDraw.Draw(mask_image)
