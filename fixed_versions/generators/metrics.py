@@ -9,8 +9,7 @@ from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
 import sys
 import os
-
-from fixed_versions.generators.mask_generator import MaskGenerator
+import numpy as np
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 fixed_versions_dir = os.path.dirname(current_dir)
@@ -20,6 +19,7 @@ sys.path.append(fixed_versions_dir)
 sys.path.append(root_dir)
 
 from fixed_versions.generators.coco_runner import COCODatasetGenerator
+from fixed_versions.generators.mask_generator import MaskGenerator
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
 
 
@@ -124,8 +124,8 @@ class COCOInpaintingMetricsScorer:
             return
         real_image = Image.open(real_image_path).convert("RGB")
         generated_image = Image.open(generated_image_path).convert("RGB")
-
-        _, _, coverage = self.mask_generator(real_image, img_id, 1)
+        
+        _, _, coverage = self.mask_generator(np.array(real_image), img_id, 1)
         self.ratio_buckets[self.bucket_keys_map[coverage]] += 1
 
         self.update_fid_clip(real_image, generated_image, prompt)

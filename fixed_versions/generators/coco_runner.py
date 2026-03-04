@@ -4,6 +4,7 @@ import json
 from PIL import Image, ImageDraw
 from tqdm import tqdm
 from typing import Tuple
+import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -50,7 +51,8 @@ class COCODatasetGenerator:
             except Exception as e:
                 print(f'unexpected error: {e} (continue anyway!)')
                 continue
-            mask_image, mask_normalized, coverage_ratio = self.mask_generator(init_image, img_id, 1)
+            mask_image, mask_normalized, coverage_ratio = self.mask_generator(np.array(init_image), img_id, 1)
+            mask_image = Image.fromarray(mask_image)
 
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)
             result_img = pipeline.resize_pipe(pipe_in)
