@@ -110,7 +110,7 @@ class COCOInpaintingMetricsScorer:
         self.lpips.reset()
         return results
 
-    def score(self, real_image_path: str, generated_image_path: str):
+    def update_metrics(self, real_image_path: str, generated_image_path: str):
         prompt, bbox = self.coco_manager.get_mask_prompt(real_image_path)
         real_image = Image.open(real_image_path).convert("RGB")
         generated_image = Image.open(generated_image_path).convert("RGB")
@@ -119,4 +119,3 @@ class COCOInpaintingMetricsScorer:
         cropped_gen = generated_image.crop((x, y, x + w, y + h))
         self.update_fid_clip(real_image, generated_image, prompt)
         self.update_reconstruction(cropped_real, cropped_gen)
-        return self.compute_metrics()
