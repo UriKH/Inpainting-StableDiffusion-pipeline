@@ -17,7 +17,9 @@ class COCODatasetGenerator:
     def __init__(self, instances_json_path, captions_json_path):
         print('====== loading COCO ======')
         self.img_filename_to_id, self.img_id_to_caption = self.__load_coco_data(instances_json_path, captions_json_path)
-        self.mask_generator = MaskGenerator()
+        self.mask_generator = MaskGenerator(
+            max_strokes=12, max_thickness=35, min_points=2, max_points=4, min_thickness=7, max_box_side=150
+        )
 
     @staticmethod
     def __load_coco_data(instances_json_path, captions_json_path):
