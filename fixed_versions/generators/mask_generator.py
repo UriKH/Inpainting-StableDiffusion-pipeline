@@ -6,6 +6,7 @@ class MaskGenerator:
     def __init__(self,
                  min_strokes=1, max_strokes=12,
                  min_thickness=10, max_thickness=40,
+                 min_box_side=20,
                  max_boxes=3):
         """
         Configures the boundaries for the random SOTA mask generation.
@@ -14,6 +15,7 @@ class MaskGenerator:
         self.max_strokes = max_strokes
         self.min_thickness = min_thickness
         self.max_thickness = max_thickness
+        self.min_box_side = min_box_side
         self.max_boxes = max_boxes
 
     def __call__(self, image, image_id, iteration):
@@ -50,8 +52,8 @@ class MaskGenerator:
         # 3. Generate Random Rectangular Boxes (Standard SOTA mix)
         num_boxes = rng.integers(0, self.max_boxes + 1)
         for _ in range(num_boxes):
-            w = rng.integers(20, width // 2)
-            h = rng.integers(20, height // 2)
+            w = rng.integers(self.min_box_side, width // 2)
+            h = rng.integers(self.min_box_side, height // 2)
             x = rng.integers(0, width - w)
             y = rng.integers(0, height - h)
             cv2.rectangle(mask, (x, y), (x + w, y + h), 255, -1)
