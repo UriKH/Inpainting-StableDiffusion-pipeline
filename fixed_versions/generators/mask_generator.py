@@ -60,7 +60,8 @@ class MaskGenerator:
 
         # Normalize mask to [0, 1] for mathematical operations
         mask_normalized = (mask / 255.0).astype(np.float32)
+        mask_expanded = np.expand_dims(mask, axis=-1)
 
         # Calculate Coverage Ratio (percentage of image masked)
         coverage_ratio = np.mean(mask_normalized)
-        return mask, coverage_ratio
+        return mask_expanded, coverage_ratio
