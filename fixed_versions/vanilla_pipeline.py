@@ -95,19 +95,11 @@ class InpaintPipeline(SD2InpaintingPipeLineScheme):
         return mask_image
 
     def image_preprocessing(self, real_image, mask_image):
-        mask_image = np.array(mask_image)
-        real_image = np.array(real_image)
-        mask_normalized = (mask_image / 255.0).astype(np.float32)
-        mask_expanded = np.expand_dims(mask_normalized, axis=-1)
-
-        # 4. Fill the masked area with Gaussian Noise
-        # Generate pure noise matching the image shape
-        # Assuming the input image is scaled [0, 255]. Adjust if it's [-1, 1].
-        gaussian_noise = np.random.normal(loc=127.5, scale=60.0, size=real_image.shape).clip(0, 255).astype(np.float32)
-
-        # Combine: Keep original pixels where mask is 0, add noise where mask is 1
-        real_image = (real_image * (1 - mask_expanded)) + (gaussian_noise * mask_expanded)
-        return Image.fromarray(real_image)
+        real_arr = np.array(real_image)
+        mask_arr = np.array(mask_image)
+        gaussian_noise = np.random.normal(loc=127.5, scale=60.0, size=real_arr.shape).clip(0, 255).astype(np.uint8)
+        real_arr[mask_arr == 255] = gaussian_noise[mask_arr == 255]
+        return Image.fromarray(real_arr)
 
     def preprocess(self, pipe_in: InpaintPipelineInput):
         pipe_in.mask_image = self.mask_preprocessing(pipe_in.mask_image)
