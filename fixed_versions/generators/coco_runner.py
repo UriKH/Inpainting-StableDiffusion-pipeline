@@ -61,7 +61,7 @@ class COCODatasetGenerator:
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)
             result_img = pipeline.resize_pipe(pipe_in)
 
-            out_path = os.path.join(output_dir, f"vanilla_{filename}")
+            out_path = os.path.join(output_dir, filename)
             result_img.save(out_path)
 
     def get_mask_prompt(self, image_path) -> Tuple[str, Image.Image]:
