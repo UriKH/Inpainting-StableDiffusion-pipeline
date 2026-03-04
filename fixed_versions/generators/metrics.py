@@ -124,9 +124,12 @@ class COCOInpaintingMetricsScorer:
             return
         real_image = Image.open(real_image_path).convert("RGB")
         generated_image = Image.open(generated_image_path).convert("RGB")
-        
-        _, _, coverage = self.mask_generator(np.array(real_image), img_id, 1)
-        self.ratio_buckets[self.bucket_keys_map[coverage]] += 1
+
+        _, _, coverage = self.mask_generator(real_image, img_id, 1)
+        for i in range(0, 91, 10):
+            if i <= coverage < i+10:
+                self.ratio_buckets[self.bucket_keys_map[i]] += 1
+                break
 
         self.update_fid_clip(real_image, generated_image, prompt)
         self.update_reconstruction(real_image, generated_image)
