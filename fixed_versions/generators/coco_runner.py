@@ -51,8 +51,8 @@ class COCODatasetGenerator:
             except Exception as e:
                 print(f'unexpected error: {e} (continue anyway!)')
                 continue
-            mask_image, mask_normalized, coverage_ratio = self.mask_generator(np.array(init_image), img_id, 1)
-            mask_image = Image.fromarray(mask_image)
+            mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id, 1)
+            mask_image = Image.fromarray(mask_image).convert("L")
             mask_image.save(os.path.join(output_dir, f'{filename}.mask.png'))
 
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)

@@ -127,7 +127,7 @@ class COCOInpaintingMetricsScorer:
 
         _, _, coverage = self.mask_generator(np.array(real_image), img_id, 1)
         for i in range(0, 91, 10):
-            if i <= coverage < i+10:
+            if i <= coverage * 100 < i+10:
                 self.ratio_buckets[self.bucket_keys_map[i]] += 1
                 break
 

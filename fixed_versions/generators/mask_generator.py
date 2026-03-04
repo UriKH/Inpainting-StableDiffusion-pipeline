@@ -58,10 +58,5 @@ class MaskGenerator:
             y = rng.integers(0, height - h)
             cv2.rectangle(mask, (x, y), (x + w, y + h), 255, -1)
 
-        # Normalize mask to [0, 1] for mathematical operations
-        mask_normalized = (mask / 255.0).astype(np.float32)
-        mask_expanded = np.expand_dims(mask, axis=-1)
-
-        # Calculate Coverage Ratio (percentage of image masked)
-        coverage_ratio = np.mean(mask_normalized)
-        return mask_expanded, coverage_ratio
+        coverage_ratio = np.mean(mask)
+        return mask, coverage_ratio
