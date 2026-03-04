@@ -111,11 +111,27 @@ class COCOInpaintingMetricsScorer:
         return results
 
     def update_metrics(self, real_image_path: str, generated_image_path: str):
+        def enforce_min_bbox(bbox: tuple, min_size=32, img_width=512, img_height=512) -> tuple:
+            """Ensures a bounding box is at least min_size x min_size to prevent CNN pooling crashes."""
+            left, top, w, h = bbox
+            right = left + w
+            bottom = top + h
+
+            if w < min_size:
+                pad_w = (min_size - w) // 2
+                left = max(0, left - pad_w)
+                right = min(img_width, left + min_size)
+            if h < min_size:
+                pad_h = (min_size - h) // 2
+                top = max(0, top - pad_h)
+                bottom = min(img_height, top + min_size)
+            return int(left), int(top), int(right), int(bottom)
+
         prompt, bbox = self.coco_manager.get_mask_prompt(real_image_path)
         real_image = Image.open(real_image_path).convert("RGB")
         generated_image = Image.open(generated_image_path).convert("RGB")
-        x, y, w, h = bbox
-        cropped_real = real_image.crop((x, y, x + w, y + h))
-        cropped_gen = generated_image.crop((x, y, x + w, y + h))
+        bbox = enforce_min_bbox(bbox)
+        cropped_real = real_image.crop(bbox)
+        cropped_gen = generated_image.crop(bbox)
         self.update_fid_clip(real_image, generated_image, prompt)
         self.update_reconstruction(cropped_real, cropped_gen)
