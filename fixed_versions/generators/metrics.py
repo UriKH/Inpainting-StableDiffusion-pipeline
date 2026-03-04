@@ -105,7 +105,6 @@ class COCOInpaintingMetricsScorer:
 
         # Reset states for the next run
         self.fid.reset()
-        self.clip_score.reset()
         self.ssim.reset()
         self.lpips.reset()
         return results
@@ -126,11 +125,17 @@ class COCOInpaintingMetricsScorer:
                 top = max(0, top - pad_h)
                 bottom = min(img_height, top + min_size)
             return int(left), int(top), int(right), int(bottom)
-
-        prompt, bbox = self.coco_manager.get_mask_prompt(real_image_path)
+        
+        try:
+            prompt, bbox = self.coco_manager.get_mask_prompt(real_image_path)
+        except Exception as e:
+            print(f'unexpected excpetion: {e} (continue anyway!)')
+            return
         real_image = Image.open(real_image_path).convert("RGB")
         generated_image = Image.open(generated_image_path).convert("RGB")
-        bbox = enforce_min_bbox(bbox)
+        
+        width, height = real_image.size
+        bbox = enforce_min_bbox(bbox, img_width=width, img_height=height)
         cropped_real = real_image.crop(bbox)
         cropped_gen = generated_image.crop(bbox)
         self.update_fid_clip(real_image, generated_image, prompt)

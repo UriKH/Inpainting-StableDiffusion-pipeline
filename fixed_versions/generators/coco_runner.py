@@ -48,7 +48,11 @@ class COCODatasetGenerator:
         for filename in tqdm(image_files, desc="Processing COCO validation images"):
             img_path = os.path.join(input_path, filename)
             init_image = Image.open(img_path).convert("RGB")
-            prompt, bbox = self.get_mask_prompt(img_path)
+            try:
+                prompt, bbox = self.get_mask_prompt(img_path)
+            except Exception as e:
+                print('unexpected error: {e} (continue anyway!)')
+                continue
             mask_image = Image.new("L", init_image.size, 0)
             draw = ImageDraw.Draw(mask_image)
             x, y, w, h = bbox
@@ -63,11 +67,11 @@ class COCODatasetGenerator:
     def get_mask_prompt(self, image_path) -> Tuple[str, Image.Image]:
         filename = os.path.basename(image_path)
         if filename not in self.img_filename_to_id:
-            raise ValueError(f"Image {filename} not found in the dataset.")
+            raise ValueError(f"Image {image_path} not found in the dataset.")
 
         img_id = self.img_filename_to_id[filename]
         if img_id not in self.img_id_to_ann or img_id not in self.img_id_to_caption:
-            raise ValueError(f"No annotations found for image {filename}.")
+            raise ValueError(f"No annotations found for image {image_path}.")
 
         # 1. חילוץ המידע מה-JSON
         ann = self.img_id_to_ann[img_id]
