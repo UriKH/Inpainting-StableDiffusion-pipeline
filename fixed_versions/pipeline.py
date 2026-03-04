@@ -33,12 +33,6 @@ class InpaintPipelineInput:
             
         self.mask_image = self.mask_image.convert("L")
 
-        # make sure there is no information leakage
-        img_arr = np.array(self.init_image)
-        mask_arr = np.array(self.mask_image)
-        img_arr[mask_arr == 255] = 0
-        self.init_image = Image.fromarray(img_arr)
-
 
 class SD2InpaintingPipeLineScheme(ABC):
     def __init__(self, model_id, device):
