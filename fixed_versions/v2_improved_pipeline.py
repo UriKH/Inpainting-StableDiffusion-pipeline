@@ -57,7 +57,7 @@ class ImprovedInpaintPipeline(InpaintPipeline):
 
         # Pass back to vanilla to handle image formatting
         return super().preprocess(pipe_in)
-
+    '''
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
         """
@@ -110,7 +110,7 @@ class ImprovedInpaintPipeline(InpaintPipeline):
 
         return latents
     
-    '''
+    
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
@@ -180,3 +180,54 @@ class ImprovedInpaintPipeline(InpaintPipeline):
         return latents
 
         '''
+
+
+    @torch.no_grad()
+    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
+        self.scheduler.set_timesteps(num_inference_steps, device=self.device)
+        noise = torch.randn_like(init_latents)
+
+        # Polarity: 1.0 = Hole (Noise), 0.0 = Background (Keep)
+        latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
+                   + (noise * mask_tensor))
+
+        for i, t in enumerate(self.scheduler.timesteps):
+            latent_model_input = torch.cat([latents] * 2)
+            latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+
+            noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
+
+            # CFG
+            noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+            noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
+
+            latents = self.scheduler.step(noise_pred, t, latents).prev_sample
+
+            # Compute aligned background for the exact same timestep
+            if i < len(self.scheduler.timesteps) - 1:
+                t_next = self.scheduler.timesteps[i + 1]
+                background_noise = torch.randn_like(init_latents)
+                known_background = self.scheduler.add_noise(init_latents, background_noise, t_next)
+            else:
+                known_background = init_latents
+
+            # --- VARIANCE-PRESERVING ANNEALED BLENDING ---
+            progress = i / len(self.scheduler.timesteps)
+
+            # The background weight slightly relaxes by up to 20% in the final steps
+            anneal_factor = 1.0 - (0.2 * progress)
+
+            # Weights based on correct polarity (1 = Hole)
+            w_bg = (1 - mask_tensor) * anneal_factor
+            w_gen = mask_tensor
+
+            # 1. Blend
+            latents = (known_background * w_bg) + (latents * w_gen)
+
+            # 2. Normalize Energy (Crucial for blurred masks)
+            # Notice that if w_gen=0 (pure background), variance_norm equals w_bg.
+            # Dividing w_bg by w_bg equals 1.0, preserving the background perfectly!
+            variance_norm = torch.sqrt(w_bg**2 + w_gen**2 + 1e-8)
+            latents = latents / variance_norm
+
+        return latents
