@@ -1,4 +1,4 @@
-from vanilla_pipeline import InpaintPipeline
+from vanilla_pipeline import  InpaintPipeline
 from pipeline import InpaintPipelineInput
 import torch
 from PIL import Image
