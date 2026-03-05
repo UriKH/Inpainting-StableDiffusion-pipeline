@@ -24,7 +24,8 @@ class ImprovedInpaintPipeline(V1Pipeline):
         mask_dilated = cv.dilate(mask_np, kernel, iterations=1)
         
         # 2. Feather mask: Use Gaussian blur to create a soft transition gradient
-        mask_pil = Image.fromarray(mask_dilated).filter(ImageFilter.GaussianBlur(radius=self.feather_radius))
+        # mask_pil = Image.fromarray(mask_dilated).filter(ImageFilter.GaussianBlur(radius=self.feather_radius))
+        mask_pil = mask_dilated
         return mask_pil
 
     @torch.no_grad()
@@ -55,7 +56,7 @@ class ImprovedInpaintPipeline(V1Pipeline):
             # Gradually reduce mask influence as t -> 0 to allow texture continuity.
             # Progresses from 0.0 (start) to 1.0 (end)
             progress = idx / len(schedule_indices)
-            anneal_factor = 1.0 - (0.15 * progress) # Retain 85% of background strength at the end
+            anneal_factor = 1.0 - (0.1 * progress) # Retain 85% of background strength at the end
             current_mask = mask_tensor * anneal_factor
 
             # Handle Time-Travel (V1 logic) and Background Context
