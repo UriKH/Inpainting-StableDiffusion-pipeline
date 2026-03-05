@@ -1,4 +1,4 @@
-from v1_improved_pipeline import ImprovedInpaintPipeline as InpaintPipeline
+from vanilla_pipeline import InpaintPipeline
 from pipeline import InpaintPipelineInput
 import torch
 from PIL import Image
