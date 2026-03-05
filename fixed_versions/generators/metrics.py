@@ -34,19 +34,22 @@ class COCOInpaintingMetricsScorer:
         self.device = device
 
         # Distribution / Realism Metric
+        print(f'Loading FID model...')
         self.fid = FrechetInceptionDistance(feature=2048, normalize=True).to(self.device)
 
         # Text-Alignment Metric
-        print("Loading native Hugging Face CLIP model for robust scoring...")
+        print("Loading CLIP model...")
         self.clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch16").to(self.device)
         self.clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch16")
         self.clip_scores = []
 
         # Reconstruction Metrics
         # data_range=1.0 because ToTensor() scales images to [0.0, 1.0]
+        print('Loading SSIM model...')
         self.ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(self.device)
 
         # normalize=True tells LPIPS to expect [0.0, 1.0] inputs instead of [-1.0, 1.0]
+        print('Loading LPIPS model...')
         self.lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg', normalize=True).to(self.device)
         self.coco_manager = COCODatasetGenerator(COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH)
 
@@ -125,7 +128,7 @@ class COCOInpaintingMetricsScorer:
         real_image = Image.open(real_image_path).convert("RGB")
         generated_image = Image.open(generated_image_path).convert("RGB")
 
-        _, _, coverage = self.mask_generator(np.array(real_image), img_id, 1)
+        _, coverage = self.mask_generator(np.array(real_image), img_id, 1)
         for i in range(0, 91, 10):
             if i <= coverage * 100 < i+10:
                 self.ratio_buckets[self.bucket_keys_map[i]] += 1

@@ -61,6 +61,6 @@ class MaskGenerator:
             x = rng.integers(0, width - w)
             y = rng.integers(0, height - h)
             cv2.rectangle(mask, (x, y), (x + w, y + h), 255, -1)
-
-        coverage_ratio = np.mean(mask)
+        
+        coverage_ratio = cv2.countNonZero(mask) / mask.size
         return mask, coverage_ratio
