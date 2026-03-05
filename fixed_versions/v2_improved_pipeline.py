@@ -6,6 +6,7 @@ from v1_improved_pipeline import ImprovedInpaintPipeline as V1Pipeline
 from pipeline import InpaintPipelineInput
 from utils import torch_utils as utils
 
+
 class ImprovedInpaintPipeline(V1Pipeline):
     def __init__(self, jump_length=10, jump_n_sample=2):
         # Inherit Time-Travel parameters and Negative Prompts from V1
@@ -13,23 +14,18 @@ class ImprovedInpaintPipeline(V1Pipeline):
         self.feather_radius = 10
         self.dilate_kernel_size = 5
 
-    def preprocess(self, pipe_in: InpaintPipelineInput):
+    def mask_preprocessing(self, mask_image: Image.Image):
         """
         Enhances the mask using Dilation and Feathering to prevent 'cut' edges.
         """
         # 1. Dilate mask: Expand slightly to give U-Net context inside the boundary
-        mask_np = np.array(pipe_in.mask_image.convert("L"))
+        mask_np = np.array(mask_image.convert("L"))
         kernel = np.ones((self.dilate_kernel_size, self.dilate_kernel_size), np.uint8)
         mask_dilated = cv.dilate(mask_np, kernel, iterations=1)
         
         # 2. Feather mask: Use Gaussian blur to create a soft transition gradient
         mask_pil = Image.fromarray(mask_dilated).filter(ImageFilter.GaussianBlur(radius=self.feather_radius))
-        pipe_in.mask_image = mask_pil
-
-        # 3. Smart Crop Logic (Implicit): 
-        # By utilizing the base resize_pipe which maintains aspect ratio via padding,
-        # the model avoids the distortion that causes 'half-person' artifacts.
-        return super().preprocess(pipe_in)
+        return mask_pil
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
