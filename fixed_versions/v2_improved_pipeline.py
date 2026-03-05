@@ -6,7 +6,7 @@ from v1_improved_pipeline import ImprovedInpaintPipeline as V1Pipeline
 from pipeline import InpaintPipelineInput
 from utils import torch_utils as utils
 
-class ImprovedInpaintPipelineV2(V1Pipeline):
+class ImprovedInpaintPipeline(V1Pipeline):
     def __init__(self, jump_length=10, jump_n_sample=2):
         # Inherit Time-Travel parameters and Negative Prompts from V1
         super().__init__(jump_length=jump_length, jump_n_sample=jump_n_sample)
