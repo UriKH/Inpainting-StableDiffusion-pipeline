@@ -1,30 +1,42 @@
 import numpy as np
 import cv2
-
+import math
 
 class MaskGenerator:
     def __init__(self,
-                 min_strokes=1, max_strokes=12,
-                 min_thickness=10, max_thickness=40,
-                 min_box_side=20, max_box_side=40,
-                 min_points=2, max_points=4,
-                 max_boxes=3):
+                 # Line configuration
+                 min_lines=1, max_lines=4,
+                 min_thickness=5, max_thickness=20,
+                 min_line_length=30, max_line_length=150,
+                 # Rectangle configuration
+                 min_rectangles=0, max_rectangles=2,
+                 min_rect_side=20, max_rect_side=60,
+                 # Circle configuration
+                 min_circles=0, max_circles=2,
+                 min_radius=15, max_radius=40):
         """
-        Configures the boundaries for the random SOTA mask generation.
+        Configures the boundaries for a controlled, randomized mask generation.
         """
-        self.min_strokes = min_strokes
-        self.max_strokes = max_strokes
+        self.min_lines = min_lines
+        self.max_lines = max_lines
         self.min_thickness = min_thickness
         self.max_thickness = max_thickness
-        self.min_box_side = min_box_side
-        self.max_box_side = max_box_side
-        self.min_points = min_points
-        self.max_points = max_points
-        self.max_boxes = max_boxes
+        self.min_line_length = min_line_length
+        self.max_line_length = max_line_length
+        
+        self.min_rectangles = min_rectangles
+        self.max_rectangles = max_rectangles
+        self.min_rect_side = min_rect_side
+        self.max_rect_side = max_rect_side
+        
+        self.min_circles = min_circles
+        self.max_circles = max_circles
+        self.min_radius = min_radius
+        self.max_radius = max_radius
 
     def __call__(self, image, image_id, iteration):
         """
-        Generates the mask and applies Gaussian noise to the masked regions.
+        Generates the mask.
         Expects `image` as a NumPy array of shape (H, W, C).
         """
         height, width = image.shape[:2]
@@ -36,31 +48,52 @@ class MaskGenerator:
         # Initialize an empty mask (1 channel)
         mask = np.zeros((height, width), dtype=np.uint8)
 
-        # 2. Generate Random Polygonal Strokes
-        num_strokes = rng.integers(self.min_strokes, self.max_strokes + 1)
-        for _ in range(num_strokes):
-            # A stroke is a sequence of random points (polygonal chain)
-            num_points = rng.integers(self.min_points, self.max_points + 1)
-            points = np.array([[rng.integers(0, width), rng.integers(0, height)]
-                               for _ in range(num_points)])
+        # 2. Generate Lines (At most 1 joint means 1 or 2 line segments)
+        num_lines = rng.integers(self.min_lines, self.max_lines + 1)
+        for _ in range(num_lines):
+            # 1 segment = straight line (0 joints), 2 segments = angled line (1 joint)
+            num_segments = rng.integers(1, 3) 
+            thickness = rng.integers(self.min_thickness, self.max_thickness + 1)
+            
+            # Pick a random starting point
+            x0 = rng.integers(0, width)
+            y0 = rng.integers(0, height)
+            
+            for _ in range(num_segments):
+                # Generate a line using an angle and restricted length
+                length = rng.uniform(self.min_line_length, self.max_line_length)
+                angle = rng.uniform(0, 2 * math.pi)
+                
+                # Calculate the end point of this segment
+                x1 = int(x0 + length * math.cos(angle))
+                y1 = int(y0 + length * math.sin(angle))
+                
+                # Draw the line and round the joints for smoothness
+                cv2.line(mask, (x0, y0), (x1, y1), 255, thickness)
+                cv2.circle(mask, (x0, y0), thickness // 2, 255, -1)
+                cv2.circle(mask, (x1, y1), thickness // 2, 255, -1)
+                
+                # The next segment (if any) starts where this one ended
+                x0, y0 = x1, y1
 
-            thickness = rng.integers(self.min_thickness, self.max_thickness)
-
-            # Draw the connected lines
-            for i in range(num_points - 1):
-                cv2.line(mask, tuple(points[i]), tuple(points[i + 1]), 255, thickness)
-                # Draw a circle at the joints to make the stroke perfectly smooth
-                cv2.circle(mask, tuple(points[i]), thickness // 2, 255, -1)
-                cv2.circle(mask, tuple(points[i + 1]), thickness // 2, 255, -1)
-
-        # 3. Generate Random Rectangular Boxes (Standard SOTA mix)
-        num_boxes = rng.integers(0, self.max_boxes + 1)
-        for _ in range(num_boxes):
-            w = rng.integers(self.min_box_side, min(self.max_box_side, width // 2))
-            h = rng.integers(self.min_box_side, min(self.max_box_side, height // 2))
-            x = rng.integers(0, width - w)
-            y = rng.integers(0, height - h)
+        # 3. Generate Random Rectangular Boxes
+        num_rects = rng.integers(self.min_rectangles, self.max_rectangles + 1)
+        for _ in range(num_rects):
+            # Safe bounds to prevent errors on very small images
+            w = rng.integers(self.min_rect_side, min(self.max_rect_side, max(self.min_rect_side + 1, width // 2)))
+            h = rng.integers(self.min_rect_side, min(self.max_rect_side, max(self.min_rect_side + 1, height // 2)))
+            x = rng.integers(0, max(1, width - w))
+            y = rng.integers(0, max(1, height - h))
             cv2.rectangle(mask, (x, y), (x + w, y + h), 255, -1)
+
+        # 4. Generate Random Circles
+        num_circles = rng.integers(self.min_circles, self.max_circles + 1)
+        for _ in range(num_circles):
+            r = rng.integers(self.min_radius, self.max_radius + 1)
+            x = rng.integers(0, width)
+            y = rng.integers(0, height)
+            cv2.circle(mask, (x, y), r, 255, -1)
         
         coverage_ratio = cv2.countNonZero(mask) / mask.size
         return mask, coverage_ratio
+        

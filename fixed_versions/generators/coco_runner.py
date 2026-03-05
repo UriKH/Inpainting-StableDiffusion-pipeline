@@ -18,7 +18,13 @@ class COCODatasetGenerator:
         print('====== loading COCO ======')
         self.img_filename_to_id, self.img_id_to_caption = self.__load_coco_data(instances_json_path, captions_json_path)
         self.mask_generator = MaskGenerator(
-            max_box_side=64, max_boxes=2, max_strokes=7, max_points=7, min_points=3
+            min_lines=2, max_lines=5, 
+            min_thickness=10, max_thickness=30,
+            min_linelength=40, max_line_length=128,
+            min_rectangles=1, max_rectangles=3,
+            min_rect_side=20, max_rect_size=64,
+            min_circles=1, max_circles=3,
+            min_raidus=10, max_radius=40
         )
 
     @staticmethod
@@ -55,6 +61,7 @@ class COCODatasetGenerator:
                 continue
             mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id, 1)
             mask_image = Image.fromarray(mask_image).convert("L")
+            mask_image.save(os.path.join(output_dir, f'{filename}.mask.jpg'))
 
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)
             result_img = pipeline.resize_pipe(pipe_in)
