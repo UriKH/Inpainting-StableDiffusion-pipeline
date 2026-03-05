@@ -20,11 +20,11 @@ class COCODatasetGenerator:
         self.mask_generator = MaskGenerator(
             min_lines=2, max_lines=5, 
             min_thickness=10, max_thickness=30,
-            min_linelength=40, max_line_length=128,
+            min_line_length=40, max_line_length=128,
             min_rectangles=1, max_rectangles=3,
             min_rect_side=20, max_rect_size=64,
             min_circles=1, max_circles=3,
-            min_raidus=10, max_radius=40
+            min_raidus=10, max_radius=32
         )
 
     @staticmethod
