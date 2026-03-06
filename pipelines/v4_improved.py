@@ -4,21 +4,17 @@ import torch
 from diffusers.models.attention_processor import AttnProcessor2_0
 
 
-class ImprovedInpaintPipelineV2(InpaintPipelineVanilla):
+class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
     def __init__(self):
         super().__init__()
     
-    def _inject_masked_attention(self, latent_h, latent_w, cross_mask, self_mask):
+    def _inject_masked_attention(self, latent_h, latent_w, self_mask):
         """Injects custom processors into the UNet."""
         processor_dict = {}
         for name in self.unet.attn_processors.keys():
             if "attn1" in name:  # Self-Attention Layers
                 processor = MaskedSelfAttnProcessor(latent_h, latent_w)
                 processor.mask_tensor = self_mask
-                processor_dict[name] = processor
-            elif "attn2" in name:  # Cross-Attention Layers
-                processor = MaskedCrossAttnProcessor(latent_h, latent_w)
-                processor.mask_tensor = cross_mask
                 processor_dict[name] = processor
             else:
                 processor_dict[name] = AttnProcessor2_0()
