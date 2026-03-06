@@ -12,7 +12,8 @@ import torch.nn.functional as F
 class ImprovedInpaintPipelineV3(ImprovedInpaintPipelineV2):
     #dilation_kernel=5, blur_kernel=15, sigma=5.0
     #dilation_kernel=3, blur_kernel=5, sigma=2.0
-    def __init__(self, ca_dilation_kernel=5, ca_blur_kernel=15, ca_sigma=5.0):
+    #dilation_kernel=5, blur_kernel=7, sigma=3.5
+    def __init__(self, ca_dilation_kernel=5, ca_blur_kernel=7, ca_sigma=3.5):
         super().__init__()
         self.CA_dilation_kernel = ca_dilation_kernel
         self.CA_blur_kernel = ca_blur_kernel
