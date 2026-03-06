@@ -23,9 +23,14 @@ import math
 #self.apply_freeu(s1=0.95, s2=0.8, b1=1.1, b2=1.1)
 
 # first: all 1's
-# second: s1=1, s2=1, b1=1.05, b2=1.05
-# third: s1=1, s2=1, b1=1, b2=1.05
-# forth: s1=0.95, s2=0.95, b1=1, b2=1.05 / 1
+# 1: s1=1, s2=1, b1=1.05, b2=1.05
+# 2: s1=1, s2=1, b1=1, b2=1.05
+# 3: s1=0.95, s2=0.95, b1=1, b2=1.05
+# 4: s1=0.95, s2=0.95, b1=1.05, b2=1.05
+# 5: s1=0.95, s2=0.95, b1=1, b2=1
+# 7: s1=0.98, s2=0.98, b1=1.05, b2=1.05
+# 8: s1=1, s2=1, b1=1.03, b2=1.03
+# 8: s1=1, s2=1, b1=1.07, b2=1.07
 
 class ImprovedInpaintPipeline(InpaintPipeline7):
     def __init__(self, jump_length=10, jump_n_sample=2):
@@ -47,7 +52,7 @@ class ImprovedInpaintPipeline(InpaintPipeline7):
         self.unet.disable_freeu()
     
     def pipe(self, pipe_in: InpaintPipelineInput):
-        self.apply_freeu(s1=0.95, s2=0.95, b1=1, b2=1.05)
+        self.apply_freeu(s1=0.95, s2=0.95, b1=1, b2=1)
         res = super().pipe(pipe_in)
         self.remove_freeu()
         return res
