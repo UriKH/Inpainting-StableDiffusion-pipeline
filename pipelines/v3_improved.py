@@ -10,15 +10,6 @@ import torch.nn.functional as F
 
 
 class ImprovedInpaintPipelineV3(ImprovedInpaintPipelineV2):
-    #dilation_kernel=5, blur_kernel=15, sigma=5.0
-    #dilation_kernel=3, blur_kernel=5, sigma=2.0
-    #dilation_kernel=5, blur_kernel=7, sigma=3.5
-    def __init__(self, ca_dilation_kernel=5, ca_blur_kernel=7, ca_sigma=3.5):
-        super().__init__()
-        self.CA_dilation_kernel = ca_dilation_kernel
-        self.CA_blur_kernel = ca_blur_kernel
-        self.CA_sigma = ca_sigma
-
     def _create_soft_mask(self, mask_tensor, dilation_kernel=5, blur_kernel=15, sigma=5.0):
         """
         Applies dilation and Gaussian blur to the binary mask tensor.
@@ -44,7 +35,7 @@ class ImprovedInpaintPipelineV3(ImprovedInpaintPipelineV2):
                    + (noise * mask_tensor))
 
         _, _, latent_h, latent_w = init_latents.shape
-        soft_attn_mask = self._create_soft_mask(mask_tensor, self.CA_dilation_kernel, self.CA_blur_kernel, self.CA_sigma)
+        soft_attn_mask = self._create_soft_mask(mask_tensor)
         
         # Inject the soft mask (while the latent blending loop still uses the strict binary mask_tensor)
         self._inject_masked_attention(latent_h, latent_w, soft_attn_mask)
