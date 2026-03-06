@@ -39,7 +39,7 @@ class ImprovedInpaintPipelineV3(ImprovedInpaintPipelineV2):
                    + (noise * mask_tensor))
 
         _, _, latent_h, latent_w = init_latents.shape
-        soft_attn_mask = self._create_soft_mask(mask_tensor)
+        soft_attn_mask = self._create_soft_mask(mask_tensor, self.CA_dilation_kernel, self.CA_blur_kernel, self.CA_sigma)
         
         # Inject the soft mask (while the latent blending loop still uses the strict binary mask_tensor)
         self._inject_masked_attention(latent_h, latent_w, soft_attn_mask)
