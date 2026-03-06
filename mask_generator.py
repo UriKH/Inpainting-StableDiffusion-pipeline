@@ -40,7 +40,7 @@ class MaskGenerator:
         Expects `image` as a NumPy array of shape (H, W, C).
         """
         height, width = image.shape[:2]
-        d = min(width, height)
+        d = (width + height) // 2
         
         min_thickness = self.min_thickness * d
         max_thickness = self.max_thickness * d
