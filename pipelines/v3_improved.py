@@ -10,6 +10,14 @@ import torch.nn.functional as F
 
 
 class ImprovedInpaintPipelineV3(ImprovedInpaintPipelineV2):
+    #dilation_kernel=5, blur_kernel=15, sigma=5.0
+    #dilation_kernel=3, blur_kernel=5, sigma=2.0
+    def __init__(self, ca_dilation_kernel=5, ca_blur_kernel=15, ca_sigma=5.0):
+        super().__init__()
+        self.CA_dilation_kernel = ca_dilation_kernel
+        self.CA_blur_kernel = ca_blur_kernel
+        self.CA_sigma = ca_sigma
+
     def _create_soft_mask(self, mask_tensor, dilation_kernel=5, blur_kernel=15, sigma=5.0):
         """
         Applies dilation and Gaussian blur to the binary mask tensor.
