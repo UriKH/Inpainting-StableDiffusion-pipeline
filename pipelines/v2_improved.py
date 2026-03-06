@@ -1,6 +1,7 @@
-from cross_attention import MaskedCrossAttnProcessor
-from vanilla_pipeline import InpaintPipelineVanilla
+from pipelines.cross_attention import MaskedCrossAttnProcessor
+from pipelines.vanilla_pipeline import InpaintPipelineVanilla
 import torch
+from diffusers.models.attention_processor import AttnProcessor2_0
 
 
 class ImprovedInpaintPipelineV2(InpaintPipelineVanilla):

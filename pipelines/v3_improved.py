@@ -1,16 +1,12 @@
-from v2_improved import ImprovedInpaintPipelineV2
-from cross_attention import MaskedCrossAttnProcessor
-from pipeline import InpaintPipelineInput
+from pipelines.v2_improved import ImprovedInpaintPipelineV2
+from pipelines.cross_attention import MaskedCrossAttnProcessor
+from pipelines.pipeline import InpaintPipelineInput
 
 import torch
 from PIL import Image
-import cv2 as cv
-import numpy as np
-import math
 
 import torchvision.transforms.functional as TF
 import torch.nn.functional as F
-
 
 
 class ImprovedInpaintPipelineV3(ImprovedInpaintPipelineV2):
