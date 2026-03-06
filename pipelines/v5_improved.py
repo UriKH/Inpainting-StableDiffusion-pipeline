@@ -1,8 +1,8 @@
-from v3_improved import ImprovedInpaintPipelineV3
+from pipelines.v3_improved import ImprovedInpaintPipelineV3
 import torch
 
 
-class ImprovedInpaintPipelineV4(ImprovedInpaintPipelineV3):   
+class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):   
     def _inject_masked_attention(self, latent_h, latent_w, cross_mask, self_mask):
         """Injects custom processors into the UNet."""
         processor_dict = {}
