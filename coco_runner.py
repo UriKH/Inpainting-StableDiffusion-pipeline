@@ -18,13 +18,13 @@ class COCODatasetGenerator:
         print('====== loading COCO ======')
         self.img_filename_to_id, self.img_id_to_caption = self.__load_coco_data(instances_json_path, captions_json_path)
         self.mask_generator = MaskGenerator(
-            min_lines=2, max_lines=4,
-            min_thickness=15, max_thickness=50,
-            min_line_length=40, max_line_length=150,
+            min_lines=2, max_lines=5,
+            min_thickness=15, max_thickness=40,
+            min_line_length=70, max_line_length=150,
             min_rectangles=2, max_rectangles=4,
-            min_rect_side=50, max_rect_side=90,
+            min_rect_side=50, max_rect_side=150,
             min_circles=1, max_circles=4,
-            min_radius=20, max_radius=50
+            min_radius=25, max_radius=60
         )
 
     @staticmethod
