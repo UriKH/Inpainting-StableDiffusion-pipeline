@@ -60,27 +60,28 @@ class MaskGenerator:
             y0 = rng.integers(0, height)
             
             for _ in range(num_segments):
-                found = False
-                
-                while not found:
-                    # Generate a line using an angle and restricted length
-                    length = rng.uniform(self.min_line_length, self.max_line_length)
-                    angle = rng.uniform(0, 2 * math.pi)
-                    
+                # Generate a line using an angle and restricted length
+                length = rng.uniform(self.min_line_length, self.max_line_length)
+
+                while True:                    
                     # Calculate the end point of this segment
+                    angle = rng.uniform(0, 2 * math.pi)
+                    if 2 * math.pi - 0.175 < angle < 2 * math.pi + 0.175
+                        continue
+                        
                     x1 = int(x0 + length * math.cos(angle))
                     y1 = int(y0 + length * math.sin(angle))
 
                     if 0 <= x1 <= width and 0 <= y1 <= height:
-                        found = True
+                        break
                     
-                    # Draw the line and round the joints for smoothness
-                    cv2.line(mask, (x0, y0), (x1, y1), 255, thickness)
-                    cv2.circle(mask, (x0, y0), thickness // 2, 255, -1)
-                    cv2.circle(mask, (x1, y1), thickness // 2, 255, -1)
-                    
-                    # The next segment (if any) starts where this one ended
-                    x0, y0 = x1, y1
+                # Draw the line and round the joints for smoothness
+                cv2.line(mask, (x0, y0), (x1, y1), 255, thickness)
+                cv2.circle(mask, (x0, y0), thickness // 2, 255, -1)
+                cv2.circle(mask, (x1, y1), thickness // 2, 255, -1)
+                
+                # The next segment (if any) starts where this one ended
+                x0, y0 = x1, y1
 
         # 3. Generate Random Rectangular Boxes
         num_rects = rng.integers(self.min_rectangles, self.max_rectangles + 1)
