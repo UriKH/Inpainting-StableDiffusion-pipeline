@@ -1,4 +1,4 @@
-from pipeline import InpaintingPipeLineScheme, InpaintPipelineInput
+from pipelines.pipeline import InpaintingPipeLineScheme, InpaintPipelineInput
 import torch
 import numpy as np
 from PIL import Image

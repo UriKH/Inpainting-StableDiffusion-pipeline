@@ -8,8 +8,8 @@ import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from vanilla_pipeline import InpaintPipeline
-from pipeline import InpaintPipelineInput
+from pipelines.vanilla_pipeline import InpaintPipelineVanilla
+from pipelines.pipeline import InpaintPipelineInput
 from mask_generator import MaskGenerator
 
 

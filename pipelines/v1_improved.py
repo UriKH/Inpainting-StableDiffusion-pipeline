@@ -1,11 +1,16 @@
-from vanilla_pipeline import InpaintPipeline, InpaintPipelineInput
+from pipelines.vanilla_pipeline import InpaintPipelineVanilla
 import torch
-from PIL import Image
+from PIL import Image, ImageFilter
 import cv2 as cv
 import numpy as np
 
 
-class ImprovedInpaintPipelineV1(InpaintPipeline):
+class ImprovedInpaintPipelineV1(InpaintPipelineVanilla):
+    def __init__(self, model_id=InpaintPipelineVanilla.MODEL_ID, device=InpaintPipelineVanilla.DEVICE, dilate_kernel_size=15, feather_radius=10):
+        super().__init__(model_id, device)
+        self.dilate_kernel_size = dilate_kernel_size
+        self.feather_radius = feather_radius
+
     def encode_prompt(self, prompt, text_encoder, tokenizer):
         text_input = tokenizer(
             prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt"
