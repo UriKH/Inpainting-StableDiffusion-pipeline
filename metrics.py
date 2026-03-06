@@ -18,8 +18,8 @@ root_dir = os.path.dirname(fixed_versions_dir)
 sys.path.append(fixed_versions_dir)
 sys.path.append(root_dir)
 
-from fixed_versions.generators.coco_runner import COCODatasetGenerator
-from fixed_versions.generators.mask_generator import MaskGenerator
+from coco_runner import COCODatasetGenerator
+from mask_generator import MaskGenerator
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH, MASKING_CONFIGS
 
 
