@@ -1,4 +1,7 @@
-# v9_improved_pipeline.py
+###############################
+# solve edge - mask blending  #
+###############################
+
 from v7_improved_pipeline import ImprovedInpaintPipeline
 import torchvision.transforms.functional as TF
 import torch

@@ -11,13 +11,13 @@ sys.path.append(root_dir)
 from generators.coco_runner import COCODatasetGenerator
 from utils.getters import input_output_paths_args
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
-from v9_improved_pipeline import ImprovedInpaintPipelineV9
+from v12_improved_pipeline import ImprovedInpaintPipelineV12
 
 
 if __name__ == "__main__":
     input_paths, output_paths = input_output_paths_args()
 
-    pipeline = ImprovedInpaintPipelineV9()
+    pipeline = ImprovedInpaintPipelineV12()
     generator = COCODatasetGenerator(
         COCO_INSTANCES_PATH,
         COCO_CAPTIONS_PATH
