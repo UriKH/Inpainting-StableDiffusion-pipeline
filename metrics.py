@@ -20,7 +20,7 @@ sys.path.append(root_dir)
 
 from fixed_versions.generators.coco_runner import COCODatasetGenerator
 from fixed_versions.generators.mask_generator import MaskGenerator
-from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
+from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH, MASKING_CONFIGS
 
 
 class COCOInpaintingMetricsScorer:
@@ -55,7 +55,8 @@ class COCOInpaintingMetricsScorer:
 
         self.ratio_buckets = {f'{i}-{i+10}': 0 for i in range(0, 91, 10)}
         self.bucket_keys_map = {i: f'{i}-{i+10}' for i in range(0, 91, 10)}
-        self.mask_generator = MaskGenerator()
+        
+        self.mask_generator = MaskGenerator(**MASKING_CONFIGS)
 
     def preprocess_image(self, pil_image: Image.Image) -> torch.Tensor:
         """Converts PIL Image to the format expected by torchmetrics (1, C, H, W) float tensor [0.0, 1.0]"""
@@ -128,7 +129,7 @@ class COCOInpaintingMetricsScorer:
         real_image = Image.open(real_image_path).convert("RGB")
         generated_image = Image.open(generated_image_path).convert("RGB")
 
-        _, coverage = self.mask_generator(np.array(real_image), img_id, 1)
+        _, coverage = self.mask_generator(np.array(real_image), img_id)
         for i in range(0, 91, 10):
             if i <= coverage * 100 < i+10:
                 self.ratio_buckets[self.bucket_keys_map[i]] += 1

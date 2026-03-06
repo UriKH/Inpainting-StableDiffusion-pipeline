@@ -31,15 +31,7 @@ def main():
     else:
         module_name = f'pipelines.v{i}_improved' 
         class_name = f'ImprovedInpaintPipelineV{i}'
-
-    # try:
-    #     module = importlib.import_module(module_name)
-    #     target_class = getattr(module, class_name)
-    #     generate(input_paths, output_paths, target_class)
-    # except ImportError:
-    #     print(f"Error: Module '{module_name}' not found.")
-    # except AttributeError:
-    #     print(f"Error: Class '{class_name}' not found in '{module_name}'.")
+        
     try:
         module = importlib.import_module(module_name)
     except ModuleNotFoundError as e:

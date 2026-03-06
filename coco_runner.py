@@ -11,21 +11,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pipelines.vanilla_pipeline import InpaintPipelineVanilla
 from pipelines.pipeline import InpaintPipelineInput
 from mask_generator import MaskGenerator
-
+from utils.globals import MASKING_CONFIGS
 
 class COCODatasetGenerator:
     def __init__(self, instances_json_path, captions_json_path):
         print('====== loading COCO ======')
         self.img_filename_to_id, self.img_id_to_caption = self.__load_coco_data(instances_json_path, captions_json_path)
-        self.mask_generator = MaskGenerator(
-            min_lines=2, max_lines=5,
-            min_thickness=15, max_thickness=40,
-            min_line_length=70, max_line_length=150,
-            min_rectangles=2, max_rectangles=4,
-            min_rect_side=50, max_rect_side=150,
-            min_circles=1, max_circles=4,
-            min_radius=25, max_radius=60
-        )
+        self.mask_generator = MaskGenerator(**MASKING_CONFIGS)
 
     @staticmethod
     def __load_coco_data(instances_json_path, captions_json_path):
@@ -59,7 +51,7 @@ class COCODatasetGenerator:
             except Exception as e:
                 print(f'unexpected error: {e} (continue anyway!)')
                 continue
-            mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id, 1)
+            mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id)
             mask_image = Image.fromarray(mask_image).convert("L")
             mask_image.save(os.path.join(output_dir, f'{filename}.mask.jpg'))
 
