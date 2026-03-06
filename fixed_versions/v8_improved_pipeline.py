@@ -32,7 +32,7 @@ import math
 # 8: s1=1, s2=1, b1=1.03, b2=1.03
 # 8: s1=1, s2=1, b1=1.07, b2=1.07
 
-class ImprovedInpaintPipeline(InpaintPipeline7):
+class ImprovedInpaintPipelinev8(InpaintPipeline7):
     def __init__(self, jump_length=10, jump_n_sample=2):
         super().__init__()
         # Store resampling hyperparameters as instance variables 
