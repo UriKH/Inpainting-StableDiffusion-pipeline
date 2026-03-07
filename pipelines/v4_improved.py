@@ -5,9 +5,9 @@ from diffusers.models.attention_processor import AttnProcessor2_0
 
 
 class ImprovedInpaintPipelineV4(ImprovedInpaintPipelineV3):
-    def __init__(self):
-        super().__init__()
-    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def _inject_masked_attention(self, latent_h, latent_w, self_mask):
         """Injects custom processors into the UNet."""
         processor_dict = {}

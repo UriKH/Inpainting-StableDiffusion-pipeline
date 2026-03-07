@@ -36,7 +36,7 @@ class InpaintPipelineInput:
 
 
 class InpaintingPipeLineScheme(ABC):
-    def __init__(self, model_id, device):
+    def __init__(self, model_id, device, **kwargs):
         self.device = device
         self.vae, self.unet, self.text_encoder, self.tokenizer, self.scheduler = self.load_sd2_components(model_id, device=device)
 

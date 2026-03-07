@@ -12,8 +12,8 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
     SD_SCALE_FACTOR = 0.18215
     CFG_SCALE_FACTOR = 7.5
 
-    def __init__(self, model_id=MODEL_ID, device=DEVICE):
-        super().__init__(model_id, device)
+    def __init__(self, model_id=MODEL_ID, device=DEVICE, **kwargs):
+        super().__init__(model_id, device, **kwargs)
 
     def encode_prompt(self, prompt, text_encoder, tokenizer):
         text_input = tokenizer(

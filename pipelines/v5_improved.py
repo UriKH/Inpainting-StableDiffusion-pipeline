@@ -4,7 +4,10 @@ from pipelines.v4_improved import ImprovedInpaintPipelineV4
 import torch
 
 
-class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV4):   
+class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV4):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def _inject_masked_attention(self, latent_h, latent_w, cross_mask, self_mask):
         """Injects custom processors into the UNet."""
         processor_dict = {}

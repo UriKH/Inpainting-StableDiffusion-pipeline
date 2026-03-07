@@ -3,10 +3,11 @@ import torch
 
 
 class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
-    def __init__(self, jump_length=10, jump_n_sample=2):
-        super().__init__()
-        self.jump_length = jump_length
-        self.jump_n_sample = jump_n_sample
+    def __init__(self, rp_jump_length=10, rp_jump_n_sample=2, **kwargs):
+        super().__init__(**kwargs)
+        self.jump_length = rp_jump_length
+        self.jump_n_sample = rp_jump_n_sample
+        print(self.jump_length)
     
     def _get_repaint_schedule(self, num_inference_steps):
         """Generates the RePaint sequence of timestep indices."""

@@ -5,9 +5,9 @@ from diffusers.models.attention_processor import AttnProcessor2_0
 
 
 class ImprovedInpaintPipelineV2(InpaintPipelineVanilla):
-    def __init__(self):
-        super().__init__()
-    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def _inject_masked_attention(self, latent_h, latent_w, mask_tensor):
         """Replaces standard cross-attention with our Masked processor."""
         processor_dict = {}

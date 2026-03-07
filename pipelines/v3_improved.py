@@ -10,17 +10,24 @@ import torch.nn.functional as F
 
 
 class ImprovedInpaintPipelineV3(ImprovedInpaintPipelineV2):
-    def _create_soft_mask(self, mask_tensor, dilation_kernel=5, blur_kernel=15, sigma=5.0):
+    def __init__(self, sm_dilation_kernel=5, sm_blur_kernel=15, sm_sigma=5.0, **kwargs):
+        super().__init__(**kwargs)
+
+        self.dilation_kernel = sm_dilation_kernel
+        self.blur_kernel = sm_blur_kernel
+        self.sigma = sm_sigma
+
+    def _create_soft_mask(self, mask_tensor):
         """
         Applies dilation and Gaussian blur to the binary mask tensor.
         mask_tensor expected shape: (1, 1, H, W)
         """
         # 1. Dilation using Max Pooling (expands the 1s outward)
-        pad = dilation_kernel // 2
-        dilated_mask = F.max_pool2d(mask_tensor, kernel_size=dilation_kernel, stride=1, padding=pad)
+        pad = self.dilation_kernel // 2
+        dilated_mask = F.max_pool2d(mask_tensor, kernel_size=self.dilation_kernel, stride=1, padding=pad)
         
         # 2. Gaussian Blur to create the soft gradient transition
-        soft_mask = TF.gaussian_blur(dilated_mask, kernel_size=[blur_kernel, blur_kernel], sigma=[sigma, sigma])
+        soft_mask = TF.gaussian_blur(dilated_mask, kernel_size=[self.blur_kernel, self.blur_kernel], sigma=[self.sigma, self.sigma])
         
         # Ensure values are strictly bounded mathematically
         return torch.clamp(soft_mask, 0.0, 1.0)
