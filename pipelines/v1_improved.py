@@ -6,34 +6,22 @@ import numpy as np
 
 
 class ImprovedInpaintPipelineV1(InpaintPipelineVanilla):
-    def __init__(self, model_id=InpaintPipelineVanilla.MODEL_ID, device=InpaintPipelineVanilla.DEVICE, dilate_kernel_size=15, feather_radius=10, *args, **kwargs):
-        super().__init__(model_id, device, *args, **kwargs)
-        self.dilate_kernel_size = dilate_kernel_size
-        self.feather_radius = feather_radius
-
-    def encode_prompt(self, prompt, text_encoder, tokenizer):
-        text_input = tokenizer(
-            prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt"
-        )
-        text_embeddings = text_encoder(text_input.input_ids.to(self.device))[0]
-        uncond_input = tokenizer(
-            [
-                "ugly, tiling, poorly drawn, out of frame, deformed, blurry, bad anatomy, bad proportions, extra limbs, artifacts, miniature scene, entire picture, out of context, mismatched lighting"
-            ],
-            padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-        )
-        uncond_embeddings = text_encoder(uncond_input.input_ids.to(self.device))[0]
-        text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
-        return text_embeddings
-    
-    def mask_preprocessing(self, mask_image: Image.Image):
-        """
-        Enhances the mask using Dilation and Feathering to prevent 'cut' edges.
-        """
-        mask_np = np.array(mask_image.convert("L"))
-        kernel = np.ones((self.dilate_kernel_size, self.dilate_kernel_size), np.uint8)
-        mask_dilated = cv.dilate(mask_np, kernel, iterations=1)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+     
+    def image_preprocessing(self, real_image, mask_image):
+        real_arr = np.array(real_image)
+        mask_arr = np.array(mask_image)
+        mask_bool = mask_arr == 255
         
-        mask_pil = Image.fromarray(mask_dilated).filter(ImageFilter.GaussianBlur(radius=self.feather_radius))
-        return mask_pil
-    
+        filled_arr = real_arr.copy()
+        mean_bg_color = np.mean(real_arr[~mask_bool], axis=0)
+        filled_arr[mask_bool] = mean_bg_color
+        
+        iterations = 15
+        blur_kernel = (15, 15)
+        
+        for _ in range(iterations):
+            blurred = cv.GaussianBlur(filled_arr, blur_kernel, 0)
+            filled_arr[mask_bool] = blurred[mask_bool]
+        return Image.fromarray(filled_arr)

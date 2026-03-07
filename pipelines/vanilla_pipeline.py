@@ -96,28 +96,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         return mask_image
 
     def image_preprocessing(self, real_image, mask_image):
-        # real_arr = np.array(real_image)
-        # mask_arr = np.array(mask_image)
-        # gaussian_noise = np.random.normal(loc=127.5, scale=60.0, size=real_arr.shape).clip(0, 255).astype(np.uint8)
-        # real_arr[mask_arr == 255] = gaussian_noise[mask_arr == 255]
-        # return Image.fromarray(real_arr)
-        real_arr = np.array(real_image)
-        mask_arr = np.array(mask_image)
-        
-        mask_bool = mask_arr == 255
-        
-        filled_arr = real_arr.copy()
-        mean_bg_color = np.mean(real_arr[~mask_bool], axis=0)
-        filled_arr[mask_bool] = mean_bg_color
-        
-        iterations = 15
-        blur_kernel = (15, 15)
-        
-        for _ in range(iterations):
-            blurred = cv.GaussianBlur(filled_arr, blur_kernel, 0)
-            # Only update the pixels INSIDE the hole with the blurred colors
-            filled_arr[mask_bool] = blurred[mask_bool]
-        return Image.fromarray(filled_arr)
+        return real_image
 
     def preprocess(self, pipe_in: InpaintPipelineInput):
         pipe_in.mask_image = self.mask_preprocessing(pipe_in.mask_image)
