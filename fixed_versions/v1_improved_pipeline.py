@@ -5,7 +5,7 @@ import cv2 as cv
 import numpy as np
 
 
-class ImprovedInpaintPipeline(InpaintPipeline):
+class ImprovedInpaintPipelineV1(InpaintPipeline):
     def __init__(self, jump_length=10, jump_n_sample=2):
         super().__init__()
         # Store resampling hyperparameters as instance variables 
