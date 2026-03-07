@@ -7,5 +7,5 @@
 
 # --- Your actual commands go below this line ---
 echo "Starting my job at: $(date)"
-python ./execution_cmds/executor.py < ./execution_cmds/run_val_1-9_eval_vanilla.txt
+python ./execution_cmds/executor.py < ./execution_cmds/run_val_0-9_eval_0.txt
 echo "Finished at: $(date)"

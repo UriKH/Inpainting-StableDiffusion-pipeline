@@ -1,5 +1,5 @@
 from pipelines.cross_attention import MaskedCrossAttnProcessor
-from pipelines.v1_improved import ImprovedInpaintPipelineV2
+from pipelines.v2_improved import ImprovedInpaintPipelineV2
 import torch
 from diffusers.models.attention_processor import AttnProcessor2_0
 
