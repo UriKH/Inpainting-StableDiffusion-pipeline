@@ -78,17 +78,15 @@ class COCOInpaintingMetricsScorer:
         with torch.no_grad():
             outputs = self.clip_model(**inputs)
 
-            # Extract raw embeddings
+            # Extract embeddings (these are already L2-normalized by Hugging Face!)
             image_embeds = outputs.image_embeds
             text_embeds = outputs.text_embeds
 
-            # Normalize to unit vectors
-            image_embeds = F.normalize(image_embeds, p=2, dim=-1)
-            text_embeds = F.normalize(text_embeds, p=2, dim=-1)
+            # Calculate cosine similarity using PyTorch's native function
+            cos_sim = F.cosine_similarity(image_embeds, text_embeds, dim=-1)
 
-            # Calculate cosine similarity and scale by 100
-            cos_sim = torch.sum(image_embeds * text_embeds, dim=-1)
-            score = 100 * torch.max(cos_sim, torch.zeros_like(cos_sim))
+            # Scale by 100 and clip negative values to 0
+            score = 100 * torch.clamp(cos_sim, min=0.0)
 
             self.clip_scores.append(score.item())
 
