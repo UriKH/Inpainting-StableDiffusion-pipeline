@@ -1,82 +1,39 @@
 from pipelines.v4_improved import ImprovedInpaintPipelineV4
-from pipelines.cross_attention import MaskedCrossAttnProcessor
-from pipelines.pipeline import InpaintPipelineInput
-
 import torch
-from PIL import Image
-
-import torchvision.transforms.functional as TF
-import torch.nn.functional as F
+from PIL import Image, ImageFilter
+import cv2 as cv
+import numpy as np
 
 
 class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV4):
-    def __init__(self, sm_dilation_kernel=5, sm_blur_kernel=15, sm_sigma=5.0, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, dilate_kernel_size=15, feather_radius=10, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dilate_kernel_size = dilate_kernel_size
+        self.feather_radius = feather_radius
 
-        self.dilation_kernel = sm_dilation_kernel
-        self.blur_kernel = sm_blur_kernel
-        self.sigma = sm_sigma
-
-    def _create_soft_mask(self, mask_tensor):
+    def encode_prompt(self, prompt, text_encoder, tokenizer):
+        text_input = tokenizer(
+            prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt"
+        )
+        text_embeddings = text_encoder(text_input.input_ids.to(self.device))[0]
+        uncond_input = tokenizer(
+            [
+                "ugly, tiling, poorly drawn, out of frame, deformed, blurry, bad anatomy, bad proportions, extra limbs, artifacts, miniature scene, entire picture, out of context, mismatched lighting"
+            ],
+            padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
+        )
+        uncond_embeddings = text_encoder(uncond_input.input_ids.to(self.device))[0]
+        text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
+        return text_embeddings
+    
+    def mask_preprocessing(self, mask_image: Image.Image):
         """
-        Applies dilation and Gaussian blur to the binary mask tensor.
-        mask_tensor expected shape: (1, 1, H, W)
+        Enhances the mask using Dilation and Feathering to prevent 'cut' edges.
         """
-        # 1. Dilation using Max Pooling (expands the 1s outward)
-        pad = self.dilation_kernel // 2
-        dilated_mask = F.max_pool2d(mask_tensor, kernel_size=self.dilation_kernel, stride=1, padding=pad)
+        mask_np = np.array(mask_image.convert("L"))
+        kernel = np.ones((self.dilate_kernel_size, self.dilate_kernel_size), np.uint8)
+        mask_dilated = cv.dilate(mask_np, kernel, iterations=1)
         
-        # 2. Gaussian Blur to create the soft gradient transition
-        soft_mask = TF.gaussian_blur(dilated_mask, kernel_size=[self.blur_kernel, self.blur_kernel], sigma=[self.sigma, self.sigma])
-
-        # Ensure values are strictly bounded mathematically
-        return torch.clamp(soft_mask, 0.0, 1.0)
-
-
-    @torch.no_grad()
-    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        self.scheduler.set_timesteps(num_inference_steps, device=self.device)
-        noise = torch.randn_like(init_latents)
-
-        latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
-                   + (noise * mask_tensor))
-
-        _, _, latent_h, latent_w = init_latents.shape
-        soft_attn_mask = self._create_soft_mask(mask_tensor)
-        
-        # Inject the soft mask (while the latent blending loop still uses the strict binary mask_tensor)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask)
-
-        try:
-            for i, t in enumerate(self.scheduler.timesteps):
-                # Expand latents for classifier free guidance
-                latent_model_input = torch.cat([latents] * 2)
-                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-
-                # Predict noise
-                with torch.no_grad():
-                    noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
-
-                # Perform guidance
-                noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
-
-                # Step the scheduler
-                latents = self.scheduler.step(noise_pred, t, latents).prev_sample
-
-                # Update timesteps and add noise
-                if i < len(self.scheduler.timesteps) - 1:
-                    t_next = self.scheduler.timesteps[i + 1]
-
-                    # Add noise to the original image matching the level we JUST stepped to
-                    noise = torch.randn_like(init_latents)
-                    known_background = self.scheduler.add_noise(init_latents, noise, t_next)
-                else:
-                    # At the final step, the known background should be perfectly clean
-                    known_background = init_latents
-
-                # Blend the accurately aligned latents
-                latents = (known_background * (1 - mask_tensor)) + (latents * mask_tensor)
-        finally:
-            self._remove_masked_attention()
-        return latents
+        mask_pil = Image.fromarray(mask_dilated).filter(ImageFilter.GaussianBlur(radius=self.feather_radius))
+        return mask_pil
+    

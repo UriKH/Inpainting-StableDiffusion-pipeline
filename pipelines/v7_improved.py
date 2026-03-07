@@ -1,45 +1,48 @@
-from pipelines.cross_attention import MaskedCrossAttnProcessor
-from pipelines.self_attention import MaskedSelfAttnProcessor
 from pipelines.v6_improved import ImprovedInpaintPipelineV6
 import torch
+from PIL import Image
+import torchvision.transforms.functional as TF
+import torch.nn.functional as F
 
 
 class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):
-    def __init__(self, use_sm_in_sa=False, **kwargs):
+    def __init__(self, sm_dilation_kernel=5, sm_blur_kernel=15, sm_sigma=5.0, **kwargs):
         super().__init__(**kwargs)
-        self.use_sm_in_sa = use_sm_in_sa
 
-    def _inject_masked_attention(self, latent_h, latent_w, cross_mask, self_mask):
-        """Injects custom processors into the UNet."""
-        processor_dict = {}
-        for name in self.unet.attn_processors.keys():
-            if "attn1" in name:  # Self-Attention Layers
-                processor = MaskedSelfAttnProcessor(latent_h, latent_w)
-                processor.mask_tensor = self_mask
-                processor_dict[name] = processor
-            elif "attn2" in name:  # Cross-Attention Layers
-                processor = MaskedCrossAttnProcessor(latent_h, latent_w)
-                processor.mask_tensor = cross_mask
-                processor_dict[name] = processor
-            else:
-                processor_dict[name] = AttnProcessor2_0()
-                
-        self.unet.set_attn_processor(processor_dict)
+        self.dilation_kernel = sm_dilation_kernel
+        self.blur_kernel = sm_blur_kernel
+        self.sigma = sm_sigma
+
+    def _create_soft_mask(self, mask_tensor):
+        """
+        Applies dilation and Gaussian blur to the binary mask tensor.
+        mask_tensor expected shape: (1, 1, H, W)
+        """
+        # 1. Dilation using Max Pooling (expands the 1s outward)
+        pad = self.dilation_kernel // 2
+        dilated_mask = F.max_pool2d(mask_tensor, kernel_size=self.dilation_kernel, stride=1, padding=pad)
+        
+        # 2. Gaussian Blur to create the soft gradient transition
+        soft_mask = TF.gaussian_blur(dilated_mask, kernel_size=[self.blur_kernel, self.blur_kernel], sigma=[self.sigma, self.sigma])
+
+        # Ensure values are strictly bounded mathematically
+        return torch.clamp(soft_mask, 0.0, 1.0)
+
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        """Overrides the base denoise method to include time-travel resampling."""
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
-
-        # 2. Initial Setup
         noise = torch.randn_like(init_latents)
+
         latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
                    + (noise * mask_tensor))
-        
+
         _, _, latent_h, latent_w = init_latents.shape
         soft_attn_mask = self._create_soft_mask(mask_tensor)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask_tensor if not self.use_sm_in_sa else soft_attn_mask)
         
+        # Inject the soft mask (while the latent blending loop still uses the strict binary mask_tensor)
+        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask)
+
         try:
             for i, t in enumerate(self.scheduler.timesteps):
                 # Expand latents for classifier free guidance

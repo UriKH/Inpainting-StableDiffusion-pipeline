@@ -1,24 +1,31 @@
-from pipelines.self_attention import MaskedSelfAttnProcessor
-from pipelines.v5_improved import ImprovedInpaintPipelineV5
+from pipelines.cross_attention import MaskedCrossAttnProcessor
+from pipelines.v4_improved import ImprovedInpaintPipelineV4
 import torch
 from diffusers.models.attention_processor import AttnProcessor2_0
 
 
-class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
+class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV4):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def _inject_masked_attention(self, latent_h, latent_w, self_mask):
-        """Injects custom processors into the UNet."""
+    def _inject_masked_attention(self, latent_h, latent_w, mask_tensor):
+        """Replaces standard cross-attention with our Masked processor."""
         processor_dict = {}
         for name in self.unet.attn_processors.keys():
-            if "attn1" in name:  # Self-Attention Layers
-                processor = MaskedSelfAttnProcessor(latent_h, latent_w)
-                processor.mask_tensor = self_mask
+            if "attn2" in name:  # The standard naming convention for cross-attention
+                processor = MaskedCrossAttnProcessor(latent_h, latent_w)
+                processor.mask_tensor = mask_tensor
                 processor_dict[name] = processor
             else:
-                processor_dict[name] = AttnProcessor2_0()
-                
+                processor_dict[name] = AttnProcessor2_0() # Keep self-attention default
+
+        self.unet.set_attn_processor(processor_dict)
+
+    def _remove_masked_attention(self):
+        """Restores the UNet to its vanilla state to prevent side effects."""
+        processor_dict = {
+            name: AttnProcessor2_0() for name in self.unet.attn_processors.keys()
+        }
         self.unet.set_attn_processor(processor_dict)
 
     @torch.no_grad()
