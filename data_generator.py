@@ -8,9 +8,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from coco_runner import COCODatasetGenerator
 from utils.getters import input_output_paths_args
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
-
+from utils.torch_utils import clear_cache
 
 def generate(input_paths, output_paths, pipeline):
+    clear_cache()
     generator = COCODatasetGenerator(
         COCO_INSTANCES_PATH,
         COCO_CAPTIONS_PATH,
@@ -23,6 +24,8 @@ def main():
     parser.add_argument("--sm_dilation_kernel", default=5, type=int, help="dilation kernel for soft masking")
     parser.add_argument("--sm_blur_kernel", default=15, type=int, help="bluring kernel for soft masking")
     parser.add_argument("--sm_sigma", default=5.0, type=float, help="sigma for soft masking")
+    parser.add_argument("--use_sm_in_sa", action='store_true', help="use soft masking in self-attention")
+    parser.add_argument("--use_sm_feathering", action='store_true', help="use soft masking in self-attention")
     parser.add_argument("--rp_jump_length", default=10, type=int, help="jump length for RePaint")
     parser.add_argument("--rp_jump_n_sample", default=2, type=int, help="number of jumps for RePaint")
 

@@ -7,7 +7,6 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
         super().__init__(**kwargs)
         self.jump_length = rp_jump_length
         self.jump_n_sample = rp_jump_n_sample
-        print(self.jump_length)
     
     def _get_repaint_schedule(self, num_inference_steps):
         """Generates the RePaint sequence of timestep indices."""
@@ -45,7 +44,7 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
         
         _, _, latent_h, latent_w = init_latents.shape
         soft_attn_mask = self._create_soft_mask(mask_tensor)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask_tensor)
+        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask_tensor if not self.use_sm_in_sa else soft_attn_mask)
         
         try:
             for idx, step_index in enumerate(schedule_indices):
@@ -76,10 +75,22 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
                     is_jump_backward = next_step_index < step_index
                 
                     if is_jump_backward:
-                        # Time travel! Apply the DDPM forward equation to inject noise back in
-                        beta = self.scheduler.betas[t_next].to(self.device)
+                        # Time travel! Calculate the precise DDPM transition ratio
+                        # Get the alpha for where we currently are (step_index + 1)
+                        if step_index + 1 < num_inference_steps:
+                            t_prev = self.scheduler.timesteps[step_index + 1]
+                            alpha_prod_prev = self.scheduler.alphas_cumprod[t_prev].to(self.device)
+                        else:
+                            # If we just finished the final step, current alpha is 1.0 (clean)
+                            alpha_prod_prev = torch.tensor(1.0, device=self.device)
+                            
+                        # Get the alpha for where we are jumping to
+                        alpha_prod_target = self.scheduler.alphas_cumprod[t_next].to(self.device)
+                        
+                        # Calculate the ratio and precisely inject the block-noise
+                        ratio = alpha_prod_target / alpha_prod_prev
                         noise = torch.randn_like(latents)
-                        latents = torch.sqrt(1 - beta) * latents + torch.sqrt(beta) * noise
+                        latents = torch.sqrt(ratio) * latents + torch.sqrt(1 - ratio) * noise
                     
                     # Generate fresh stochastic background context for the upcoming step
                     background_noise = torch.randn_like(init_latents)

@@ -1,7 +1,9 @@
 import torch
+import gc
 
 
 def clear_cache():
+    gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 

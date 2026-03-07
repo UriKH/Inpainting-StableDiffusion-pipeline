@@ -5,8 +5,9 @@ import torch
 
 
 class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV4):
-    def __init__(self, **kwargs):
+    def __init__(self, use_sm_in_sa=False, **kwargs):
         super().__init__(**kwargs)
+        self.use_sm_in_sa = use_sm_in_sa
 
     def _inject_masked_attention(self, latent_h, latent_w, cross_mask, self_mask):
         """Injects custom processors into the UNet."""
@@ -37,7 +38,7 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV4):
         
         _, _, latent_h, latent_w = init_latents.shape
         soft_attn_mask = self._create_soft_mask(mask_tensor)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask_tensor)
+        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask_tensor if not self.use_sm_in_sa else soft_attn_mask)
         
         try:
             for i, t in enumerate(self.scheduler.timesteps):
