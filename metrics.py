@@ -5,6 +5,8 @@ from torchmetrics.multimodal.clip_score import CLIPScore
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from torchvision.transforms import ToTensor
+from torchmetrics import MeanSquaredError
+from torchmetrics.image import PeakSignalNoiseRatio
 from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
 import sys
@@ -28,7 +30,9 @@ class COCOInpaintingMetricsScorer:
     SSIM = 'SSIM'
     LPIPS = 'LPIPS'
     CLIP_SCORE = 'CLIP score'
-    METRICS = [FID, SSIM, LPIPS, CLIP_SCORE]
+    MSE = 'MSE'
+    PSNR = 'PSNR'
+    METRICS = [FID, SSIM, LPIPS, CLIP_SCORE, MSE, PSNR]
 
     def __init__(self, device="cuda"):
         self.device = device
@@ -52,6 +56,13 @@ class COCOInpaintingMetricsScorer:
         print('Loading LPIPS model...')
         self.lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg', normalize=True).to(self.device)
         self.coco_manager = COCODatasetGenerator(COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH)
+
+        print('Loading SSIM model...')
+        self.ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(self.device)
+
+        print('Loading MSE and PSNR models...')
+        self.mse = MeanSquaredError().to(self.device)
+        self.psnr = PeakSignalNoiseRatio(data_range=1.0).to(self.device)
 
         self.ratio_buckets = {f'{i}-{i+5}': 0 for i in range(0, 91, 5)}
         self.bucket_keys_map = {i: f'{i}-{i+5}' for i in range(0, 91, 5)}
@@ -97,6 +108,8 @@ class COCOInpaintingMetricsScorer:
 
         self.ssim.update(gen_tensor, real_tensor)
         self.lpips.update(gen_tensor, real_tensor)
+        self.mse.update(gen_tensor, real_tensor)
+        self.psnr.update(gen_tensor, real_tensor
 
     def compute_metrics(self) -> dict:
         """Calculates and returns the final scores across all updated images."""
@@ -109,6 +122,8 @@ class COCOInpaintingMetricsScorer:
             self.CLIP_SCORE: float(mean_clip),
             self.SSIM: float(self.ssim.compute()),
             self.LPIPS: float(self.lpips.compute()),
+            self.MSE: float(self.mse.compute()),
+            self.PSNR: float(self.psnr.compute()),
             'ratio buckets': self.ratio_buckets
         }
 
@@ -116,6 +131,8 @@ class COCOInpaintingMetricsScorer:
         self.fid.reset()
         self.ssim.reset()
         self.lpips.reset()
+        self.mse.reset()
+        self.psnr.reset()
         return results
 
     def update_metrics(self, real_image_path: str, generated_image_path: str):
