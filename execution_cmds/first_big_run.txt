@@ -1,0 +1,13 @@
+python execution_cmds/temp.py
+python ./data_generator.py --version 0 data/coco/evaluation/ ./results/evaluation/vanilla
+python create_metrics_json.py ./data/coco/evaluation ./results/evaluation/vanilla
+python ./data_generator.py --version 0 data/coco/validation/ ./results/validation/vanilla
+python create_metrics_json.py ./data/coco/validation ./results/validation/vanilla
+python ./data_generator.py --version 2 data/coco/validation/ ./results/validation/v2
+python create_metrics_json.py ./data/coco/validation ./results/validation/v2
+python ./data_generator.py --version 3 data/coco/validation/ ./results/validation/v3
+python create_metrics_json.py ./data/coco/validation ./results/validation/v3
+python ./data_generator.py --version 4 data/coco/validation/ ./results/validation/v4
+python create_metrics_json.py ./data/coco/validation ./results/validation/v4
+python ./data_generator.py --version 5 data/coco/validation/ ./results/validation/v5
+python create_metrics_json.py ./data/coco/validation ./results/validation/v5
