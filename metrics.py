@@ -109,7 +109,7 @@ class COCOInpaintingMetricsScorer:
         self.ssim.update(gen_tensor, real_tensor)
         self.lpips.update(gen_tensor, real_tensor)
         self.mse.update(gen_tensor, real_tensor)
-        self.psnr.update(gen_tensor, real_tensor
+        self.psnr.update(gen_tensor, real_tensor)
 
     def compute_metrics(self) -> dict:
         """Calculates and returns the final scores across all updated images."""
