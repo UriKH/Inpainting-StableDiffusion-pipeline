@@ -53,8 +53,8 @@ class COCOInpaintingMetricsScorer:
         self.lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg', normalize=True).to(self.device)
         self.coco_manager = COCODatasetGenerator(COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH)
 
-        self.ratio_buckets = {f'{i}-{i+10}': 0 for i in range(0, 91, 10)}
-        self.bucket_keys_map = {i: f'{i}-{i+10}' for i in range(0, 91, 10)}
+        self.ratio_buckets = {f'{i}-{i+5}': 0 for i in range(0, 91, 5)}
+        self.bucket_keys_map = {i: f'{i}-{i+5}' for i in range(0, 91, 5)}
         
         self.mask_generator = MaskGenerator(**MASKING_CONFIGS)
 
@@ -130,8 +130,8 @@ class COCOInpaintingMetricsScorer:
         generated_image = Image.open(generated_image_path).convert("RGB")
 
         _, coverage = self.mask_generator(np.array(real_image), img_id)
-        for i in range(0, 91, 10):
-            if i <= coverage * 100 < i+10:
+        for i in range(0, 91, 5):
+            if i <= coverage * 100 < i+5:
                 self.ratio_buckets[self.bucket_keys_map[i]] += 1
                 break
 

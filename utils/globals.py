@@ -16,10 +16,10 @@ FROM_COVERAGE_RATIO = {f'{i}-{i + 10}': i for i in range(0, 91, 10)}
 
 MASKING_CONFIGS = {
     "min_lines": 2, "max_lines": 5,
-    "min_thickness": 0.03, "max_thickness": 0.05,
-    "min_line_length": 0.1, "max_line_length": 0.25,
+    "min_thickness": 0.02, "max_thickness": 0.06,
+    "min_line_length": 0.1, "max_line_length": 0.3,
     "min_rectangles": 2, "max_rectangles": 4,
-    "min_rect_side": 0.1, "max_rect_side": 0.25,
+    "min_rect_side": 0.1, "max_rect_side": 0.3,
     "min_circles": 1, "max_circles": 4,
-    "min_radius": 0.05, "max_radius": 0.125
+    "min_radius": 0.05, "max_radius": 0.15
 }
