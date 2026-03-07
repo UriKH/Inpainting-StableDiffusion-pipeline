@@ -6,4 +6,5 @@ safetensors
 numpy
 opencv-python
 torchmetrics[image]
-pythonperlin
+pandas
+seaborn
