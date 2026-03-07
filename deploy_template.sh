@@ -2,10 +2,9 @@
 #SBATCH --job-name=my_remote_job    # A name for your job
 #SBATCH --output=result_%j.log     # Standard output and error log (%j inserts job ID)
 #SBATCH --ntasks=1                 # Run a single task
-#SBATCH --mem=4G                   # Request 4 Gigabytes of RAM
-#SBATCH --time=02:00:00            # Time limit (HH:MM:SS)
+#SBATCH --time=12:00:00            # Time limit (HH:MM:SS)
+#SBATCH --gres=gpu:1 		   # Ask for GPU
 
-# --- Your actual commands go below this line ---
 echo "Starting my job at: $(date)"
-python3 my_script.py               # Replace this with your actual command
+python3 execution_cmds/executor.py < YOU_COMMANDS_FILE               # Replace this with your actual command
 echo "Finished at: $(date)"
