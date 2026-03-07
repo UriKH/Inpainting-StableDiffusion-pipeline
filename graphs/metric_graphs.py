@@ -16,7 +16,7 @@ def create_graphs(file_paths):
         if not os.path.exists(path):
             print(f"File not found: {path}")
             continue
-
+        
         with open(path, 'r') as f:
             metrics_dict = json.load(f)
             
@@ -77,7 +77,7 @@ def create_graphs(file_paths):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate graphs from JSON metric files.")
-    parser.add_argument('-j', '--json-files', help='Paths to the global directory in which all the directories we containing metrics.')
+    parser.add_argument('-j', '--json-files', help='Paths to the global directory in which all the directories which contain metrics JSON files.')
     
     args = parser.parse_args()
     

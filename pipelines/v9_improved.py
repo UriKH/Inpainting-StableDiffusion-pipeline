@@ -3,12 +3,8 @@ from pipelines.pipeline import InpaintPipelineInput
 
 
 class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):
-    def __init__(self, jump_length=10, jump_n_sample=2):
-        super().__init__()
-        # Store resampling hyperparameters as instance variables 
-        # to preserve the base pipe() signature.
-        self.jump_length = jump_length
-        self.jump_n_sample = jump_n_sample
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
     
     def apply_freeu(self, s1=0.9, s2=0.2, b1=1.2, b2=1.4):
         """
