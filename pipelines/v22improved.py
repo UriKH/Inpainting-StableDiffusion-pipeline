@@ -6,7 +6,7 @@ import numpy as np
 from scipy.ndimage import distance_transform_edt
 
 
-class ImprovedInpaintPipelineV2(InpaintPipelineVanilla):
+class ImprovedInpaintPipelineV22(InpaintPipelineVanilla):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
      
