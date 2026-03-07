@@ -1,5 +1,6 @@
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
+from diffusers.models.attention_processor import AttnProcessor2_0
 import math
 import torch
 
@@ -11,18 +12,11 @@ class MaskedSelfAttnProcessor:
         self.mask_tensor = None  # Expected shape: (1, 1, H, W) where 1 is the hole
 
     def __call__(self, attn, hidden_states, encoder_hidden_states=None, attention_mask=None, temb=None, *args, **kwargs):
-        # 1. Handle Cross-Attention gracefully
-        is_cross_attention = encoder_hidden_states is not None
-        
+        # 1. Standard projection
         batch_size, sequence_length, _ = hidden_states.shape
         query = attn.to_q(hidden_states)
-        
-        if is_cross_attention:
-            key = attn.to_k(encoder_hidden_states)
-            value = attn.to_v(encoder_hidden_states)
-        else:
-            key = attn.to_k(hidden_states)
-            value = attn.to_v(hidden_states)
+        key = attn.to_k(hidden_states)
+        value = attn.to_v(hidden_states)
 
         inner_dim = key.shape[-1]
         head_dim = inner_dim // attn.heads
@@ -31,38 +25,35 @@ class MaskedSelfAttnProcessor:
         key = key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
         value = value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
 
-        # 2. Dynamic Spatial Resizing (Only apply masking if it's Self-Attention)
-        if self.mask_tensor is not None and not is_cross_attention:
+        # 2. Dynamic Spatial Resizing for the mask
+        if self.mask_tensor is not None:
             ratio = math.sqrt((self.latent_h * self.latent_w) / sequence_length)
             h_i = int(self.latent_h / ratio)
             w_i = int(self.latent_w / ratio)
             
-            # Convert mask to float to prevent F.interpolate crashes
-            mask_float = self.mask_tensor.to(dtype=query.dtype, device=query.device)
-            mask_resized = F.interpolate(mask_float, size=(h_i, w_i), mode='nearest')
-            
-            # Using standard rounding for flat view just in case
+            # Using nearest to keep the boolean logic clean for self-attention
+            mask_resized = F.interpolate(self.mask_tensor, size=(h_i, w_i), mode='nearest')
             mask_flat = mask_resized.view(1, sequence_length)  # Shape: (1, N)
             
             # 3. Build the Bias Matrix B
-            Q_mask = mask_flat.unsqueeze(-1) # Queries
-            K_mask = mask_flat.unsqueeze(-2) # Keys
+            # Q_mask shape: (1, N, 1) -> Represents the queries
+            # K_mask shape: (1, 1, N) -> Represents the keys
+            Q_mask = mask_flat.unsqueeze(-1)
+            K_mask = mask_flat.unsqueeze(-2)
             
             # Rule: If Query is Background (0) and Key is Hole (1), Forbid it.
             forbidden = (Q_mask == 0) & (K_mask == 1)
             
-            # Create the bias tensor using the safest minimum float value
+            # Create the bias tensor and fill forbidden connections with -10000
             bias = torch.zeros((1, 1, sequence_length, sequence_length), device=query.device, dtype=query.dtype)
-            min_float = torch.finfo(query.dtype).min # Safer than -10000.0, especially for fp16
-            bias.masked_fill_(forbidden, min_float)
+            bias.masked_fill_(forbidden, -10000.0)
             
             # Expand to match batch size (for CFG) and heads
             bias = bias.expand(batch_size, attn.heads, sequence_length, sequence_length)
             
-            # Combine with existing attention_mask safely
+            # Combine with existing attention_mask if one was passed by the UNet
             if attention_mask is not None:
-                # Ensure incoming mask is float before adding
-                attention_mask = attention_mask.to(dtype=query.dtype) + bias
+                attention_mask = attention_mask + bias
             else:
                 attention_mask = bias
 

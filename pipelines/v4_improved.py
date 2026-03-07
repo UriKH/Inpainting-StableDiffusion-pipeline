@@ -1,10 +1,10 @@
-from pipelines.cross_attention import MaskedCrossAttnProcessor
-from pipelines.vanilla_pipeline import InpaintPipelineVanilla
+from pipelines.self_attention import MaskedSelfAttnProcessor
+from pipelines.v3_improved import ImprovedInpaintPipelineV3
 import torch
 from diffusers.models.attention_processor import AttnProcessor2_0
 
 
-class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
+class ImprovedInpaintPipelineV4(ImprovedInpaintPipelineV3):
     def __init__(self):
         super().__init__()
     
