@@ -25,7 +25,6 @@ def main():
     parser.add_argument("--sm_blur_kernel", default=15, type=int, help="bluring kernel for soft masking")
     parser.add_argument("--sm_sigma", default=5.0, type=float, help="sigma for soft masking")
     parser.add_argument("--use_sm_in_sa", action='store_true', help="use soft masking in self-attention")
-    parser.add_argument("--use_sm_feathering", action='store_true', help="use soft masking in self-attention")
     parser.add_argument("--rp_jump_length", default=10, type=int, help="jump length for RePaint")
     parser.add_argument("--rp_jump_n_sample", default=2, type=int, help="number of jumps for RePaint")
 
