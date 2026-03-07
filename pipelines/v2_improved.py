@@ -19,8 +19,8 @@ class ImprovedInpaintPipelineV2(InpaintPipelineVanilla):
         
         filled_arr = real_arr.copy()
         filled_arr[mask_bool] = real_arr[tuple(indices[:, mask_bool])]
-        blurred = cv.GaussianBlur(filled_arr, (15,15), 0)
-        filled_arr[mask_bool] = blurred[mask_bool]
+        # blurred = cv.GaussianBlur(filled_arr, (21,21), 0)
+        # filled_arr[mask_bool] = blurred[mask_bool]
         # img = Image.fromarray(filled_arr)
         # img.save("./meow/masked_v2_.png")
         return Image.fromarray(filled_arr)
