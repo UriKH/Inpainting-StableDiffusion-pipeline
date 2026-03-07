@@ -26,13 +26,10 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV4):
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
         """Overrides the base denoise method to include time-travel resampling."""
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
-        
-        # 1. Generate the custom time-travel schedule
-        schedule_indices = self._get_repaint_schedule(num_inference_steps)
-        
+
         # 2. Initial Setup
         noise = torch.randn_like(init_latents)
-        latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[schedule_indices[0]]) * (1 - mask_tensor))
+        latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
                    + (noise * mask_tensor))
         
         _, _, latent_h, latent_w = init_latents.shape
