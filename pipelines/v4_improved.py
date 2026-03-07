@@ -4,7 +4,7 @@ import torch
 from diffusers.models.attention_processor import AttnProcessor2_0
 
 
-class ImprovedInpaintPipelineV2(ImprovedInpaintPipelineV2):
+class ImprovedInpaintPipelineV4(ImprovedInpaintPipelineV2):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

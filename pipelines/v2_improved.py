@@ -3,6 +3,7 @@ import torch
 from PIL import Image, ImageFilter
 import cv2 as cv
 import numpy as np
+from scipy.ndimage import distance_transform_edt
 
 
 class ImprovedInpaintPipelineV2(InpaintPipelineVanilla):
