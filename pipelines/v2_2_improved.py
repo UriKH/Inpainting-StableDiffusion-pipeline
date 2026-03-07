@@ -3,28 +3,24 @@ import torch
 from PIL import Image, ImageFilter
 import cv2 as cv
 import numpy as np
+from scipy.ndimage import distance_transform_edt
 
 
-class ImprovedInpaintPipelineV1(InpaintPipelineVanilla):
+class ImprovedInpaintPipelineV2(InpaintPipelineVanilla):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
      
     def image_preprocessing(self, real_image, mask_image):
         real_arr = np.array(real_image)
         mask_arr = np.array(mask_image)
+        
         mask_bool = mask_arr == 255
+        _, indices = distance_transform_edt(mask_bool, return_indices=True)
         
         filled_arr = real_arr.copy()
-        mean_bg_color = np.mean(real_arr[~mask_bool], axis=0)
-        filled_arr[mask_bool] = mean_bg_color
-        
-        iterations = 15
-        blur_kernel = (15, 15)
-        
-        for _ in range(iterations):
-            blurred = cv.GaussianBlur(filled_arr, blur_kernel, 0)
-            filled_arr[mask_bool] = blurred[mask_bool]
-        
-        # img = Image.fromarray(filled_arr)
-        # img.save("./meow/masked_v1.png")
+        filled_arr[mask_bool] = real_arr[tuple(indices[:, mask_bool])]
+        # blurred = cv.GaussianBlur(filled_arr, (15,15), 0)
+        # filled_arr[mask_bool] = blurred[mask_bool]
+        img = Image.fromarray(filled_arr)
+        img.save("./meow/masked_v2_.png")
         return Image.fromarray(filled_arr)
