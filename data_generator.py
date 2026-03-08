@@ -63,7 +63,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="which pipeline version to import")
 
     parser.add_argument("--sm_dilation_kernel", default=5, type=int, help="dilation kernel for soft masking")
-    parser.add_argument("--sm_blur_kernel", default=15, type=int, help="bluring kernel for soft masking")
+    parser.add_argument("--sm_blur_kernel", default=15, type=int, help="blurring kernel for soft masking")
     parser.add_argument("--sm_sigma", default=5.0, type=float, help="sigma for soft masking")
     parser.add_argument("--use_sm_in_sa", action='store_true', help="use soft masking in self-attention")
 

@@ -19,8 +19,12 @@ class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV10):
         if current_sigma <= 0.5:
             return mask_tensor  # Return hard mask at the end for perfect background
 
-        dilated_mask = TF.dilation(mask_tensor,
-                                   kernel_size=[self.dmb_dilation_kernel_size, self.dmb_dilation_kernel_size])
+        if self.dmb_dilation_kernel_size == 1:
+            dilated_mask = mask_tensor
+        else:
+            dilated_mask = TF.dilation(
+                mask_tensor, kernel_size=[self.dmb_dilation_kernel_size, self.dmb_dilation_kernel_size]
+            )
         return TF.gaussian_blur(
             dilated_mask,
             kernel_size=[self.dmb_blur_kernel_size, self.dmb_blur_kernel_size],
