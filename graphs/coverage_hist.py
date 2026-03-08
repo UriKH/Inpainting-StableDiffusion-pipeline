@@ -69,7 +69,7 @@ def draw_hist(df):
 
     plt.xlim(0, 50)
 
-    plt.title(r'Mask Distribution: Mean and $\pm$1 STD')
+    plt.title(r'Masked Area Distribution')
     plt.xlabel('Image Masked (%)')
     plt.ylabel('Number of Images')
     plt.grid(axis='y', alpha=0.3)
