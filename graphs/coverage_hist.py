@@ -52,11 +52,11 @@ def draw_hist(df):
 
     sns.histplot(
         data=df, x='Mask Percentage', hue='Dataset',
-        kde=True, element="step", palette=['#1f77b4', '#ff7f0e'],
+        kde=True, element="step", palette=['#008ED0', '#FFA2B9'],
         alpha=0.4
     )
 
-    plt.xlim(0, 75)
+    plt.xlim(0, 50)
 
     plt.title('Distribution of Mask Percentages per Image')
     plt.xlabel('Percentage of Image Masked (%)')
@@ -81,4 +81,4 @@ if __name__ == '__main__':
     df = prepare_data(validation_path, evaluation_path)
 
     draw_hist(df)
-    draw_ecdf(df)
+    #draw_ecdf(df)
