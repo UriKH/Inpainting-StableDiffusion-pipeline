@@ -6,6 +6,7 @@ from v7_improved_pipeline import ImprovedInpaintPipeline
 import torchvision.transforms.functional as TF
 import torch
 
+
 class ImprovedInpaintPipelineV9(ImprovedInpaintPipeline):
     def _get_dynamic_mask(self, mask_tensor, current_idx, total_steps, max_sigma=5.0):
         """Linearly anneals the mask blur from max_sigma down to a hard boundary."""

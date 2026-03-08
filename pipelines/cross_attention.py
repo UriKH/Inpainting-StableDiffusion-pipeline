@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 import math
 
+
 class MaskedCrossAttnProcessor:
     def __init__(self, latent_h, latent_w):
         self.latent_h = latent_h
