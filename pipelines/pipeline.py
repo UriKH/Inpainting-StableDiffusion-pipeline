@@ -7,7 +7,6 @@ from diffusers import (
 
 from transformers import CLIPTextModel, CLIPTokenizer
 from PIL import Image, ImageDraw
-import os
 import torch
 from tqdm import tqdm
 import numpy as np

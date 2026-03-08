@@ -10,6 +10,7 @@ from utils.getters import input_output_paths_args
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
 from utils.torch_utils import clear_cache
 
+
 def generate(input_paths, output_paths, pipeline):
     clear_cache()
     generator = COCODatasetGenerator(
@@ -17,6 +18,7 @@ def generate(input_paths, output_paths, pipeline):
         COCO_CAPTIONS_PATH,
     )
     generator.generate(input_paths, output_paths, pipeline)
+
 
 def main():
     parser = argparse.ArgumentParser(description="which pipeline version to import")

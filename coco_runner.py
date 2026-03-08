@@ -8,10 +8,13 @@ import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipelines.vanilla_pipeline import InpaintPipelineVanilla
 from pipelines.pipeline import InpaintPipelineInput
 from mask_generator import MaskGenerator
 from utils.globals import MASKING_CONFIGS
+from utils.seed import seed_everything
+
+base_seed = 42
+
 
 class COCODatasetGenerator:
     def __init__(self, instances_json_path, captions_json_path):
@@ -43,7 +46,9 @@ class COCODatasetGenerator:
 
         image_files = [f for f in os.listdir(input_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
-        for filename in tqdm(image_files, desc="Processing COCO validation images"):
+        for i, filename in tqdm(enumerate(image_files), desc="Processing COCO images"):
+            seed_everything(base_seed + i)
+
             img_path = os.path.join(input_path, filename)
             init_image = Image.open(img_path).convert("RGB")
             try:
@@ -53,7 +58,6 @@ class COCODatasetGenerator:
                 continue
             mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id)
             mask_image = Image.fromarray(mask_image).convert("L")
-            #mask_image.save(os.path.join(output_dir, f'{filename}.mask.jpg'))
 
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)
             result_img = pipeline.resize_pipe(pipe_in)
