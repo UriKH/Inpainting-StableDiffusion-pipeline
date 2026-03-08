@@ -142,8 +142,12 @@ class COCOInpaintingMetricsScorer:
         except Exception as e:
             print(f'unexpected exception: {e} (continue anyway!)')
             return
-        real_image = Image.open(real_image_path).convert("RGB")
-        generated_image = Image.open(generated_image_path).convert("RGB")
+        try:
+            real_image = Image.open(real_image_path).convert("RGB")
+            generated_image = Image.open(generated_image_path).convert("RGB")
+        except:
+            print(f'no generated image in {generated_image_path}...')
+            return
 
         _, coverage = self.mask_generator(np.array(real_image), img_id)
         for i in range(0, 91, 5):

@@ -3,9 +3,15 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import matplotlib.colormaps as cm
+from matplotlib import colormaps as cm
 import argparse
-from ..metrics import COCOInpaintingMetricsScorer
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir)
+sys.path.append(root_dir)
+
+from metrics import COCOInpaintingMetricsScorer
 
 
 def create_graphs(file_paths):
@@ -49,9 +55,9 @@ def create_graphs(file_paths):
         metric_df = df[df['Metric'] == metric]
         norm = plt.Normalize(metric_df['Score'].min(), metric_df['Score'].max())
         if COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST[metric]:
-            colors = [cm.get_cmap('RdBu')(norm(value)) for value in metric_df['Values']]
+            colors = [cm.get_cmap('RdBu')(norm(value)) for value in metric_df['Score']]
         else:
-            colors = [cm.get_cmap('RdBu_r')(norm(value)) for value in metric_df['Values']]
+            colors = [cm.get_cmap('RdBu_r')(norm(value)) for value in metric_df['Score']]
 
         plt.figure(figsize=(8, 5))
         
