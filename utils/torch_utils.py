@@ -7,7 +7,8 @@ def clear_cache():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-def generate_perlin_noise_2d(self, shape, res, device):
+
+def generate_perlin_noise_2d(shape, res, device):
     """
     Generates true Gradient Noise (Perlin) for organic blob structures.
     shape: (B, C, H, W)

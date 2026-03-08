@@ -21,7 +21,8 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipeline):
     def compute_organic_mask(self, base_mask, t, max_t, noise_res=16, dilation_kernel=11, thresh='linear'):
         """
         Generates a time-dependent, organic 'coastline' mask for latent blending.
-        """# 1. The Time Ratio (rho) based on actual noise level t
+        """
+        # 1. The Time Ratio (rho) based on actual noise level t
         rho = 1.0 - (t.item() / max_t)
 
         if t.item() == 0:

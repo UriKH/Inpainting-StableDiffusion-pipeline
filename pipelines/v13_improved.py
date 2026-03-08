@@ -1,10 +1,10 @@
-from pipelines.v10_improved import ImprovedInpaintPipelineV10
+from pipelines.v11_improved import ImprovedInpaintPipelineV11
 import torchvision.transforms.functional as TF
 import torch
 import torch.nn.functional as F
 
 
-class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV10):
+class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV11):
     def __init__(self, dmb_dilation_kernel_size=3, dmb_blur_kernel_size=5, dmb_sigma=5, **kwargs):
         super().__init__(**kwargs)
         self.dmb_dilation_kernel_size = dmb_dilation_kernel_size
