@@ -2,10 +2,16 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir)
+sys.path.append(root_dir)
+
 from utils.getters import input_output_paths_args
 from utils.seed import seed_everything
 from utils.globals import MASKING_CONFIGS, COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
-import os
 from tqdm import tqdm
 from PIL import Image
 from coco_runner import COCODatasetGenerator
@@ -56,7 +62,7 @@ def draw_hist(df):
     plt.xlabel('Percentage of Image Masked (%)')
     plt.ylabel('Number of Images')
     plt.grid(axis='y', alpha=0.3)
-    plt.show()
+    plt.savefig("mask_distribution_hist.png", dpi=300, bbox_inches='tight')
 
 
 def draw_ecdf(df):
@@ -67,7 +73,7 @@ def draw_ecdf(df):
     plt.xlabel('Mask Coverage (%)')
     plt.ylabel('Number of Images')
     plt.grid(axis='y', alpha=0.3)
-    plt.show()
+    plt.savefig("mask_distribution_ecdf.png", dpi=300, bbox_inches='tight')
 
 
 if __name__ == '__main__':
