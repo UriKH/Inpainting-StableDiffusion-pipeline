@@ -1,11 +1,11 @@
-from pipelines.v4_improved import ImprovedInpaintPipelineV4
+from pipelines.v3_improved import ImprovedInpaintPipelineV3
 import torch
 from PIL import Image, ImageFilter
 import cv2 as cv
 import numpy as np
 
 
-class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV4):
+class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
     def __init__(self, dilate_kernel_size=15, feather_radius=10, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dilate_kernel_size = dilate_kernel_size
