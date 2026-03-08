@@ -47,7 +47,6 @@ class COCODatasetGenerator:
         image_files = [f for f in os.listdir(input_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
         for i, filename in tqdm(enumerate(image_files), desc="Processing COCO images"):
-            seed_everything(base_seed + i)
 
             img_path = os.path.join(input_path, filename)
             init_image = Image.open(img_path).convert("RGB")
@@ -56,6 +55,8 @@ class COCODatasetGenerator:
             except Exception as e:
                 print(f'unexpected error: {e} (continue anyway!)')
                 continue
+            
+            seed_everything(base_seed + img_id)
             mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id)
             mask_image = Image.fromarray(mask_image).convert("L")
 
