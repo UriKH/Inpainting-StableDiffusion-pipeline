@@ -53,7 +53,7 @@ class COCODatasetGenerator:
                 continue
             mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id)
             mask_image = Image.fromarray(mask_image).convert("L")
-            mask_image.save(os.path.join(output_dir, f'{filename}.mask.jpg'))
+            #mask_image.save(os.path.join(output_dir, f'{filename}.mask.jpg'))
 
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)
             result_img = pipeline.resize_pipe(pipe_in)
