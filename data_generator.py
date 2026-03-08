@@ -20,21 +20,7 @@ def generate(input_paths, output_paths, pipeline):
     generator.generate(input_paths, output_paths, pipeline)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="which pipeline version to import")
-    
-    parser.add_argument("--sm_dilation_kernel", default=5, type=int, help="dilation kernel for soft masking")
-    parser.add_argument("--sm_blur_kernel", default=15, type=int, help="bluring kernel for soft masking")
-    parser.add_argument("--sm_sigma", default=5.0, type=float, help="sigma for soft masking")
-    parser.add_argument("--use_sm_in_sa", action='store_true', help="use soft masking in self-attention")
-    parser.add_argument("--rp_jump_length", default=10, type=int, help="jump length for RePaint")
-    parser.add_argument("--rp_jump_n_sample", default=2, type=int, help="number of jumps for RePaint")
-
-    parser.add_argument("--version", type=int, required=True, help="insert the version number (0 for vanilla)")
-
-    input_paths, output_paths = input_output_paths_args(parser)
-    args = parser.parse_args()
-    
+def main(args):
     i = int(args.version)
     if i == 0:
         module_name = 'pipelines.vanilla_pipeline'
@@ -72,5 +58,25 @@ def main():
         print(f"Error while running generator: {e}")
         traceback.print_exc()
 
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="which pipeline version to import")
+
+    parser.add_argument("--sm_dilation_kernel", default=5, type=int, help="dilation kernel for soft masking")
+    parser.add_argument("--sm_blur_kernel", default=15, type=int, help="bluring kernel for soft masking")
+    parser.add_argument("--sm_sigma", default=5.0, type=float, help="sigma for soft masking")
+    parser.add_argument("--use_sm_in_sa", action='store_true', help="use soft masking in self-attention")
+
+    parser.add_argument("--rp_jump_length", default=10, type=int, help="jump length for RePaint")
+    parser.add_argument("--rp_jump_n_sample", default=2, type=int, help="number of jumps for RePaint")
+
+    parser.add_argument("--dmb_dilation_kernel_size", default=3, type=int,
+                        help="dynamic mask blending dilation kernel size")
+    parser.add_argument("--dmb_blur_kernel_size", default=5, type=int, help="dynamic mask blending blur kernel size")
+    parser.add_argument("--dmb_sigma", default=5.0, type=float, help="dynamic mask blending sigma")
+
+    parser.add_argument("--version", type=int, required=True, help="insert the version number (0 for vanilla)")
+
+    input_paths, output_paths = input_output_paths_args(parser)
+    args = parser.parse_args()
+    main(args)

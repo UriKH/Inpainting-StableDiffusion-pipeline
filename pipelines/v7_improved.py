@@ -28,7 +28,6 @@ class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):
         # Ensure values are strictly bounded mathematically
         return torch.clamp(soft_mask, 0.0, 1.0)
 
-
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
