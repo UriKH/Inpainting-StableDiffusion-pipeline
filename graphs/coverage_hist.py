@@ -48,18 +48,29 @@ def prepare_data(validation_path, evaluation_path):
 
 
 def draw_hist(df):
+    stats = df.groupby('Dataset')['Mask Percentage'].agg(['mean', 'std']).to_dict('index')
+
     plt.figure(figsize=(10, 6))
+    
+    colors = {'Validation': '#FFA2B9', 'Evaluation': '#008ED0'}
 
     sns.histplot(
         data=df, x='Mask Percentage', hue='Dataset',
-        kde=True, element="step", palette=['#008ED0', '#FFA2B9'],
+        kde=True, element="step", palette=colors,
         alpha=0.4
     )
 
+    for model, color in colors.items():
+        m = stats[model]['mean']
+        s = stats[model]['std']
+
+        plt.axvline(m, color=color, linestyle='--', linewidth=2, label=f'{model} Mean: {m:.1f}%')
+        plt.axvspan(m - s, m + s, color=color, alpha=0.1)
+
     plt.xlim(0, 50)
 
-    plt.title('Distribution of Mask Percentages per Image')
-    plt.xlabel('Percentage of Image Masked (%)')
+    plt.title(r'Mask Distribution: Mean and $\pm$1 STD')
+    plt.xlabel('Image Masked (%)')
     plt.ylabel('Number of Images')
     plt.grid(axis='y', alpha=0.3)
     plt.savefig("mask_distribution_hist.png", dpi=300, bbox_inches='tight')
