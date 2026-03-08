@@ -1,0 +1,66 @@
+echo ">>>>>>>>>>>>>>>>>>>> Running Vanilla Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 0 ./data/coco/validation ./results/validation/vanilla
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/vanilla
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V1 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 1 ./data/coco/validation ./results/validation/v1
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v1
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V2 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 2 ./data/coco/validation ./results/validation/v2
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v2
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V3 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 3 ./data/coco/validation ./results/validation/v3
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v3
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V5 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 5 ./data/coco/validation ./results/validation/v5
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v5
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V6 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 6 ./data/coco/validation ./results/validation/v6
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v6
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V7 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 7 ./data/coco/validation ./results/validation/v7
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v7
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V8 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 8 ./data/coco/validation ./results/validation/v8
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v8
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V9 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 9 ./data/coco/validation ./results/validation/v9
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v9
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V9 Validation with (dk=3, bk=5, sigma=1.5) >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 9 --sm_dilation_kernel 3 --sm_blur_kernel 5 --sm_sigma 1.5 ./data/coco/validation ./results/validation/v9_3_5_1-5
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v9_3_5_1-5
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V9 Validation with (dk=3, bk=7, sigma=1.5) >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 9 --sm_dilation_kernel 3 --sm_blur_kernel 7 --sm_sigma 1.5 ./data/coco/validation ./results/validation/v9_3_7_1-5
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v9_3_7_1-5
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V10 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 10 ./data/coco/validation ./results/validation/v10
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v10
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V11 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 11 ./data/coco/validation ./results/validation/v11
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v11
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V111 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 111 ./data/coco/validation ./results/validation/v111
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v111
+
+echo ">>>>>>>>>>>>>>>>>>>> Creating Metrics Graphs >>>>>>>>>>>>>>>>>>>>"
+python ./graphs/metric_graphs.py -j ./results/validation/
+
+echo ">>>>>>>>>>>>>>>>>>>> Running Vanilla Evaluation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 0 ./data/coco/evaluation ./results/evaluation/vanilla
+python ./create_metrics_json.py ./data/coco/evaluation ./results/evaluation/vanilla
+
+echo ">>>>>>>>>>>>>>>>>>>> Running V4 Validation >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 4 ./data/coco/validation ./results/validation/v4
+python ./create_metrics_json.py ./data/coco/validation ./results/validation/v4
