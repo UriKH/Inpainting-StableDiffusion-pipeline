@@ -1,7 +1,7 @@
 from pipelines.v10_improved import ImprovedInpaintPipelineV10
 import torchvision.transforms.functional as TF
-import torch.nn.functional as F
 import torch
+import torch.nn.functional as F
 
 
 class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV10):
