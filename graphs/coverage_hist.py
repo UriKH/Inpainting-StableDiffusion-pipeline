@@ -52,7 +52,7 @@ def draw_hist(df):
 
     plt.figure(figsize=(10, 6))
     
-    colors = {'Validation': '#FFA2B9', 'Evaluation': '#008ED0'}
+    colors = {'Evaluation': '#FFA2B9', 'Validation': '#008ED0'}
 
     sns.histplot(
         data=df, x='Mask Percentage', hue='Dataset',
@@ -65,7 +65,7 @@ def draw_hist(df):
         s = stats[model]['std']
 
         plt.axvline(m, color=color, linestyle='--', linewidth=2, label=f'{model} Mean: {m:.1f}%')
-        plt.axvspan(m - s, m + s, color=color, alpha=0.1)
+        #plt.axvspan(m - s, m + s, color=color, alpha=0.1)
 
     plt.xlim(0, 50)
 
