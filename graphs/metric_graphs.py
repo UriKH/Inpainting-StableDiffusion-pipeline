@@ -3,7 +3,9 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.colormaps as cm
 import argparse
+from ..metrics import COCOInpaintingMetricsScorer
 
 
 def create_graphs(file_paths):
@@ -40,12 +42,17 @@ def create_graphs(file_paths):
     unique_metrics = df['Metric'].unique()
 
     sorted_folders = sorted(df['Folder'].unique())
-
+    
     # 4. Generate a graph for each metric
     for metric in unique_metrics:
         # Filter the dataframe for only the current metric
         metric_df = df[df['Metric'] == metric]
-        
+        norm = plt.Normalize(metric_df['Score'].min(), metric_df['Score'].max())
+        if COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST[metric]:
+            colors = [cm.get_cmap('RdBu')(norm(value)) for value in metric_df['Values']]
+        else:
+            colors = [cm.get_cmap('RdBu_r')(norm(value)) for value in metric_df['Values']]
+
         plt.figure(figsize=(8, 5))
         
         # Create the bar plot
@@ -54,15 +61,15 @@ def create_graphs(file_paths):
             x="Folder", 
             y="Score", 
             hue="Folder",      # Assigns different colors to different folders
-            palette="viridis", # A nice, colorblind-friendly color palette
+            palette=colors,
             legend=False,
             order=sorted_folders
         )
         
         # Aesthetics
         plt.title(f"Comparison of {metric}", fontsize=14, fontweight='bold')
-        plt.xlabel("Source Folder", fontsize=12)
-        plt.ylabel("Score", fontsize=12)
+        plt.xlabel("Pipeline Version", fontsize=12)
+        plt.ylabel("Metric Score", fontsize=12)
         
         # Rotate the x-axis labels in case your folder names are long
         plt.xticks(rotation=45, ha="right") 

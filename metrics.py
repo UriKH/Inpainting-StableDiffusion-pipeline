@@ -33,7 +33,8 @@ class COCOInpaintingMetricsScorer:
     MSE = 'MSE'
     PSNR = 'PSNR'
     METRICS = [FID, SSIM, LPIPS, CLIP_SCORE, MSE, PSNR]
-
+    METRIC_BEST_HIGHEST = {FID: False, SSIM: True, LPIPS: False, CLIP_SCORE: True, MSE: False, PSNR: True}
+    
     def __init__(self, device="cuda"):
         self.device = device
 

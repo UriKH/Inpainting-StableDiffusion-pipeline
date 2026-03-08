@@ -67,12 +67,14 @@ class COCODatasetGenerator:
             result_img.save(out_path)
 
     def get_mask_prompt(self, image_path) -> Tuple[str, Image.Image]:
-        filename = os.path.basename(image_path)
-        if filename not in self.img_filename_to_id:
-            raise ValueError(f"Image {image_path} not found in the dataset.")
-
-        img_id = self.img_filename_to_id[filename]
+        img_id = self.get_img_id(image_path)
         if img_id not in self.img_id_to_caption:
             raise ValueError(f"No annotations found for image {image_path}.")
         global_caption = self.img_id_to_caption[img_id]
         return global_caption, img_id
+
+    def get_img_id(self, image_path) -> int:
+        filename = os.path.basename(image_path)
+        if filename not in self.img_filename_to_id:
+            raise ValueError(f"Image {image_path} not found in the dataset.")
+        return self.img_filename_to_id[filename]
