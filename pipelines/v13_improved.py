@@ -1,5 +1,6 @@
 from pipelines.v10_improved import ImprovedInpaintPipelineV10
 import torchvision.transforms.functional as TF
+import torch.nn.functional as F
 import torch
 
 
@@ -22,9 +23,14 @@ class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV10):
         if self.dmb_dilation_kernel_size == 1:
             dilated_mask = mask_tensor
         else:
-            dilated_mask = TF.dilation(
-                mask_tensor, kernel_size=[self.dmb_dilation_kernel_size, self.dmb_dilation_kernel_size]
+            padding = self.dmb_dilation_kernel_size // 2
+            dilated_mask = F.max_pool2d(
+                mask_tensor,
+                kernel_size=self.dmb_dilation_kernel_size,
+                stride=1,
+                padding=padding
             )
+
         return TF.gaussian_blur(
             dilated_mask,
             kernel_size=[self.dmb_blur_kernel_size, self.dmb_blur_kernel_size],
