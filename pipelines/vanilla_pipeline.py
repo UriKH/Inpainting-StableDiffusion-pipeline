@@ -52,23 +52,33 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         image = image.cpu().permute(0, 2, 3, 1).numpy()[0]
         image = (image * 255).round().astype("uint8")
         return Image.fromarray(image)
-    
+
     @torch.no_grad()
-    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
+    def _initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
         noise = torch.randn_like(init_latents)
 
-        latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
-                   + (noise * mask_tensor))
+        timesteps = self.scheduler.timesteps
+        if self.reconstruction:
+            init_step = min(int(num_inference_steps * (1 - self.init_noise_strength)), num_inference_steps - 1)
+            timesteps = self.scheduler.timesteps[init_step:]
+            latents = self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[init_step])
+        else:
+            latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
+                       + (noise * mask_tensor))
+        return latents, timesteps
 
-        for i, t in enumerate(self.scheduler.timesteps):
+    @torch.no_grad()
+    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
+        latents, timesteps = self._initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+
+        for i, t in enumerate(timesteps):
             # Expand latents for classifier free guidance
             latent_model_input = torch.cat([latents] * 2)
             latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
 
             # Predict noise
-            with torch.no_grad():
-                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
+            noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
 
             # Perform guidance
             noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
@@ -107,8 +117,12 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         return image
 
     @torch.no_grad()
-    def pipe(self, pipe_in: InpaintPipelineInput):
+    def pipe(self, pipe_in: InpaintPipelineInput, target_size=512):
         pipe_in = self.preprocess(pipe_in)
+        orig_size = pipe_in.init_image.size
+        pipe_in.init_image, pipe_in.mask_image = self.prepare_inpainting_data_advanced(
+            pipe_in.init_image, pipe_in.mask_image, target_size
+        )
         text_embeddings = self.encode_prompt(pipe_in.prompt, self.text_encoder, self.tokenizer)
         utils.clear_cache()
         latents = self.prepare_latents(pipe_in.init_image)
@@ -119,4 +133,5 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         utils.clear_cache()
         final_image = self.decode_latents(latents)
         utils.clear_cache()
-        return self.postprocess(final_image, mask)
+        post_processed = self.postprocess(final_image, mask)
+        return self.restore_original_dimensions(post_processed, orig_size)

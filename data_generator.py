@@ -90,6 +90,8 @@ if __name__ == "__main__":
     parser.add_argument("--use_freeu", action='store_true', help="use FreeU")
 
     parser.add_argument("--version", type=int, required=True, help="insert the version number (0 for vanilla)")
+    parser.add_argument("--init_noise_strength", default=1.0, type=float, help="init noise strength")
+    parser.add_argument("--reconstruction", action='store_true', type=str, help="reconstruction or replace")
 
     input_paths, output_paths = input_output_paths_args(parser)
     args = parser.parse_args()

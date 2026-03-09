@@ -35,8 +35,10 @@ class InpaintPipelineInput:
 
 
 class InpaintingPipeLineScheme(ABC):
-    def __init__(self, model_id, device, **kwargs):
+    def __init__(self, model_id, device, reconstruction=False, init_noise_strength=0.95, **kwargs):
         self.device = device
+        self.reconstruction = reconstruction
+        self.init_noise_strength = init_noise_strength
         self.vae, self.unet, self.text_encoder, self.tokenizer, self.scheduler = self.load_sd2_components(model_id, device=device)
 
     @staticmethod
@@ -124,13 +126,5 @@ class InpaintingPipeLineScheme(ABC):
         return final_image
 
     @abstractmethod
-    def pipe(self, pipe_in: InpaintPipelineInput):
+    def pipe(self, pipe_in: InpaintPipelineInput,  target_size=512):
         raise NotImplementedError
-
-    def resize_pipe(self, pipe_in: InpaintPipelineInput, target_size=512):
-        orig_size = pipe_in.init_image.size
-        init_image, mask_image = self.prepare_inpainting_data_advanced(pipe_in.init_image, pipe_in.mask_image, target_size)
-        pipe_in.init_image = init_image
-        pipe_in.mask_image = mask_image
-        result_padded = self.pipe(pipe_in)
-        return self.restore_original_dimensions(result_padded, orig_size)

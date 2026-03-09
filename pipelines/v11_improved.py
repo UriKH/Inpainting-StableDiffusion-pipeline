@@ -22,10 +22,10 @@ class ImprovedInpaintPipelineV11(ImprovedInpaintPipelineV10):
         """Restores standard UNet architecture scaling."""
         self.unet.disable_freeu()
     
-    def pipe(self, pipe_in: InpaintPipelineInput):
+    def pipe(self, pipe_in: InpaintPipelineInput, target_size=512):
         if self.use_freeu:
             self.apply_freeu()
-        res = super().pipe(pipe_in)
+        res = super().pipe(pipe_in, target_size)
         if self.use_freeu:
             self.remove_freeu()
         return res
