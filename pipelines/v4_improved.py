@@ -31,7 +31,7 @@ class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
                            [0.0,  0.25, 0.0]], dtype=np.float32)
         
         # 3. Iterate the PDE solver
-        max_iters = 1500     # A huge safety net
+        max_iters = 1000     # A huge safety net
         tolerance = 0.05
 
         for i in range(max_iters):
@@ -47,4 +47,6 @@ class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
                 break
                 
         filled_arr = np.clip(filled_arr, 0, 255).astype(np.uint8)
+        #img = Image.fromarray(filled_arr)
+        #img.save('try_laplace2.png')
         return Image.fromarray(filled_arr)
