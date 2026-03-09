@@ -6,7 +6,7 @@ import numpy as np
 
 
 class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
-    def __init__(self, dilate_kernel_size=15, feather_radius=10, *args, **kwargs):
+    def __init__(self, dilate_kernel_size=3, feather_radius=5, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dilate_kernel_size = dilate_kernel_size
         self.feather_radius = feather_radius
