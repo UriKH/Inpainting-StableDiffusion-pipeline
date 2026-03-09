@@ -4,7 +4,7 @@ import urllib.request
 import zipfile
 
 def download_coco_subset(num_images=1000):
-    base_dir = './coco'
+    base_dir = './data/coco'
     ann_zip_path = os.path.join(base_dir, 'annotations_trainval2017.zip')
     ann_file = os.path.join(base_dir, 'annotations/instances_val2017.json')
     out_dir = os.path.join(base_dir, 'val2017_subset')
