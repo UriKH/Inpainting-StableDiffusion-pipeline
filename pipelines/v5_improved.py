@@ -1,4 +1,5 @@
 from pipelines.v3_improved import ImprovedInpaintPipelineV3
+from pipelines.pipeline import InpaintPipelineInput
 import torch
 from PIL import Image, ImageFilter
 import cv2 as cv
@@ -36,4 +37,9 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
         
         mask_pil = Image.fromarray(mask_dilated).filter(ImageFilter.GaussianBlur(radius=self.feather_radius))
         return mask_pil
-    
+
+    def preprocess(self, pipe_in: InpaintPipelineInput):
+        org_mask = pipe_in.mask_image
+        pipe_in.mask_image = self.mask_preprocessing(pipe_in.mask_image)
+        pipe_in.init_image = self.image_preprocessing(pipe_in.init_image, org_mask)
+        return pipe_in
