@@ -79,8 +79,8 @@ if __name__ == "__main__":
     parser.add_argument("--dmb_sigma", default=5.0, type=float, help="dynamic mask blending sigma")
 
     # Organic masking using Perlin noise
-    parser.add_argument("--om_noise_res", default=3, type=int, help="noise resolution for organic masking")
-    parser.add_argument("--om_dilation_kernel", default=9, type=int, help="dilation kernel for organic masking")
+    parser.add_argument("--om_noise_res", default=4, type=int, help="noise resolution for organic masking")
+    parser.add_argument("--om_dilation_kernel", default=7, type=int, help="dilation kernel for organic masking")
     parser.add_argument("--om_thresh", default='linear', type=str, help="dilation kernel for organic masking")
 
     parser.add_argument("--freeu_s1", default=0.95, type=float, help="s1 parameter for FreeU")

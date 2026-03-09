@@ -1,5 +1,6 @@
 import torch
 import gc
+import math
 
 
 def clear_cache():
@@ -48,3 +49,12 @@ def generate_perlin_noise_2d(shape, res, device):
     
     # 7. Normalize from roughly [-1, 1] to [0, 1]
     return (n_final + 1.0) / 2.0
+
+
+if __name__ == "__main__":
+    import numpy as np
+    from PIL import Image
+    mask = np.zeros((1, 1, 64, 64))
+    noise = generate_perlin_noise_2d(mask.shape, (4, 4), 'cpu')
+    # Multiply by 255 first, then cast to uint8
+    Image.fromarray((noise.squeeze().cpu().numpy() * 255).astype('uint8')).show()
