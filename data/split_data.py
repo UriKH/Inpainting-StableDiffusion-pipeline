@@ -55,4 +55,4 @@ if __name__ == "__main__":
     EVAL_DIR = "../../data/coco/evaluation"
     VAL_DIR = "../../data/coco/validation"
     
-    split_folder_data(SOURCE_DIR, EVAL_DIR, VAL_DIR, split_ratio=0.85)
+    split_folder_data(SOURCE_DIR, EVAL_DIR, VAL_DIR, split_ratio=5/6.0)
