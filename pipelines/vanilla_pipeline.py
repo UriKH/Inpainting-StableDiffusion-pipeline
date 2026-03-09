@@ -62,9 +62,9 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         if self.reconstruction:
             init_step = min(int(num_inference_steps * (1 - self.init_noise_strength)), num_inference_steps - 1)
             timesteps = self.scheduler.timesteps[init_step:]
-            latents = self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[init_step])
+            latents = self.scheduler.add_noise(init_latents, noise, timesteps[init_step])
         else:
-            latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
+            latents = ((self.scheduler.add_noise(init_latents, noise, timesteps[0]) * (1 - mask_tensor))
                        + (noise * mask_tensor))
         return latents, timesteps
 
@@ -88,8 +88,8 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
             latents = self.scheduler.step(noise_pred, t, latents).prev_sample
 
             # Update timesteps and add noise
-            if i < len(self.scheduler.timesteps) - 1:
-                t_next = self.scheduler.timesteps[i + 1]
+            if i < len(timesteps) - 1:
+                t_next = timesteps[i + 1]
 
                 # Add noise to the original image matching the level we JUST stepped to
                 noise = torch.randn_like(init_latents)

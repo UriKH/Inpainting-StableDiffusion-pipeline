@@ -35,7 +35,7 @@ class InpaintPipelineInput:
 
 
 class InpaintingPipeLineScheme(ABC):
-    def __init__(self, model_id, device, reconstruction=False, init_noise_strength=0.95, **kwargs):
+    def __init__(self, model_id, device, reconstruction=False, init_noise_strength=0.96, **kwargs):
         self.device = device
         self.reconstruction = reconstruction
         self.init_noise_strength = init_noise_strength

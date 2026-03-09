@@ -10,16 +10,7 @@ class ImprovedInpaintPipelineV14(ImprovedInpaintPipelineV13, ImprovedInpaintPipe
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
         """Overrides the base denoise method to include time-travel resampling."""
-        self.scheduler.set_timesteps(num_inference_steps, device=self.device)
-
-        # 1. Generate the custom time-travel schedule
-        schedule_indices = self._get_repaint_schedule(num_inference_steps)
-
-        # 2. Initial Setup
-        noise = torch.randn_like(init_latents)
-        latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[schedule_indices[0]]) * (
-                1 - mask_tensor))
-                   + (noise * mask_tensor))
+        latents, timesteps, schedule_indices = self._initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
 
         _, _, latent_h, latent_w = init_latents.shape
         soft_attn_mask = self._create_soft_mask(mask_tensor)
@@ -29,7 +20,7 @@ class ImprovedInpaintPipelineV14(ImprovedInpaintPipelineV13, ImprovedInpaintPipe
 
         try:
             for idx, step_index in enumerate(schedule_indices):
-                t = self.scheduler.timesteps[step_index]
+                t = timesteps[step_index]
 
                 # Expand latents for classifier free guidance
                 latent_model_input = torch.cat([latents] * 2)
@@ -65,15 +56,15 @@ class ImprovedInpaintPipelineV14(ImprovedInpaintPipelineV13, ImprovedInpaintPipe
 
                 if not is_last_step:
                     next_step_index = schedule_indices[idx + 1]
-                    t_next = self.scheduler.timesteps[next_step_index]
+                    t_next = timesteps[next_step_index]
 
                     is_jump_backward = next_step_index < step_index
 
                     if is_jump_backward:
                         # Time travel! Calculate the precise DDPM transition ratio
                         # Get the alpha for where we currently are (step_index + 1)
-                        if step_index + 1 < num_inference_steps:
-                            t_prev = self.scheduler.timesteps[step_index + 1]
+                        if step_index + 1 < len(timesteps):
+                            t_prev = timesteps[step_index + 1]
                             alpha_prod_prev = self.scheduler.alphas_cumprod[t_prev].to(self.device)
                         else:
                             # If we just finished the final step, current alpha is 1.0 (clean)

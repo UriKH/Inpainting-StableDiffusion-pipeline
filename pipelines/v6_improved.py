@@ -30,17 +30,12 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV3):
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        self.scheduler.set_timesteps(num_inference_steps, device=self.device)
-        noise = torch.randn_like(init_latents)
-
-        latents = ((self.scheduler.add_noise(init_latents, noise, self.scheduler.timesteps[0]) * (1 - mask_tensor))
-                   + (noise * mask_tensor))
-
+        latents, timesteps = self._initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
         self._inject_masked_attention(latent_h, latent_w, mask_tensor)
 
         try:
-            for i, t in enumerate(self.scheduler.timesteps):
+            for i, t in enumerate(timesteps):
                 # Expand latents for classifier free guidance
                 latent_model_input = torch.cat([latents] * 2)
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
@@ -57,8 +52,8 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV3):
                 latents = self.scheduler.step(noise_pred, t, latents).prev_sample
 
                 # Update timesteps and add noise
-                if i < len(self.scheduler.timesteps) - 1:
-                    t_next = self.scheduler.timesteps[i + 1]
+                if i < len(timesteps) - 1:
+                    t_next = timesteps[i + 1]
 
                     # Add noise to the original image matching the level we JUST stepped to
                     noise = torch.randn_like(init_latents)

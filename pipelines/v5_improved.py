@@ -7,10 +7,10 @@ import numpy as np
 
 
 class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
-    def __init__(self, dilate_kernel_size=3, feather_radius=5, *args, **kwargs):
+    def __init__(self, dilate_kernel_size=15, feather_kernel_size=21, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dilate_kernel_size = dilate_kernel_size
-        self.feather_radius = feather_radius
+        self.feather_kernel_size = feather_kernel_size
 
     def encode_prompt(self, prompt, text_encoder, tokenizer):
         text_input = tokenizer(
@@ -32,11 +32,10 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
         Enhances the mask using Dilation and Feathering to prevent 'cut' edges.
         """
         mask_np = np.array(mask_image.convert("L"))
-        kernel = np.ones((self.dilate_kernel_size, self.dilate_kernel_size), np.uint8)
+        kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (self.dilate_kernel_size, self.dilate_kernel_size))
         mask_dilated = cv.dilate(mask_np, kernel, iterations=1)
-        
-        mask_pil = Image.fromarray(mask_dilated).filter(ImageFilter.GaussianBlur(radius=self.feather_radius))
-        return mask_pil
+        feathered_mask = cv.GaussianBlur(mask_dilated, (self.feather_kernel_size, self.feather_kernel_size), 0)
+        return Image.fromarray(feathered_mask)
 
     def preprocess(self, pipe_in: InpaintPipelineInput):
         org_mask = pipe_in.mask_image
