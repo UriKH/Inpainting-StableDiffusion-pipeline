@@ -16,6 +16,8 @@ class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
         
         # True inside the hole, False in the known background
         mask_bool = mask_arr == 255
+        if not np.any(mask_bool):
+            return real_image
         
         # 1. Initialize the hole with the mean background color to speed up math
         mean_bg_color = np.mean(real_arr[~mask_bool], axis=0)
@@ -29,16 +31,15 @@ class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
                            [0.0,  0.25, 0.0]], dtype=np.float32)
         
         # 3. Iterate the PDE solver
-        max_iters = 10000     # A huge safety net
-        tolerance = 0.1
+        max_iters = 1500     # A huge safety net
+        tolerance = 0.05
 
         for i in range(max_iters):
-            smoothed = cv.filter2D(filled_arr, -1, kernel)
+            smoothed = cv.filter2D(filled_arr, -1, kernel, borderType=cv.BORDER_REPLICATE)
             
             # Calculate the mathematical difference between this step and the last step
             # We only care about the change INSIDE the hole
             max_shift = np.max(np.abs(smoothed[mask_bool] - filled_arr[mask_bool]))
-            
             filled_arr[mask_bool] = smoothed[mask_bool]
             
             # The convergence check
