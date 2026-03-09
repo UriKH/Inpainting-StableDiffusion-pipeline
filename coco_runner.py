@@ -61,7 +61,7 @@ class COCODatasetGenerator:
             mask_image = Image.fromarray(mask_image).convert("L")
 
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)
-            result_img = pipeline.resize_pipe(pipe_in)
+            result_img = pipeline.pipe(pipe_in)
 
             out_path = os.path.join(output_dir, filename)
             result_img.save(out_path)
