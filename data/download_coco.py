@@ -41,5 +41,6 @@ def download_coco_subset(num_images=1000):
             
     print("All done!")
 
+
 if __name__ == "__main__":
     download_coco_subset(1200)

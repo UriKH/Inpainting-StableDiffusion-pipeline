@@ -29,6 +29,10 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
 
         return schedule_indices
 
+    def _get_dynamic_schedule(self, num_inference_steps):
+        """Generates the dynamic sequence of timestep indices."""
+        pass
+
     @torch.no_grad()
     def _initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
