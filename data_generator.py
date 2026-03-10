@@ -72,9 +72,9 @@ if __name__ == "__main__":
     parser.add_argument("--sm_sigma", default=5.0, type=float, help="sigma for soft masking")
     parser.add_argument("--use_sm_in_sa", action='store_true', help="use soft masking in self-attention")
 
-    # RePaint - resampling time travel
-    parser.add_argument("--rp_jump_length", default=10, type=int, help="jump length for RePaint")
-    parser.add_argument("--rp_jump_n_sample", default=2, type=int, help="number of jumps for RePaint")
+    # resampling time travel
+    parser.add_argument("--rp_jump_length", default=7, type=int, help="jump length for resampling")
+    parser.add_argument("--rp_jump_n_sample", default=2, type=int, help="number of jumps for resampling")
 
     # Dynamic Mask Blending
     parser.add_argument("--dmb_dilation_kernel_size", default=3, type=int,
