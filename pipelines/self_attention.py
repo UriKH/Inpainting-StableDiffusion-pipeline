@@ -39,10 +39,11 @@ class MaskedSelfAttnProcessor:
             
             # Convert mask to float to prevent F.interpolate crashes
             mask_float = self.mask_tensor.to(dtype=query.dtype, device=query.device)
-            mask_resized = F.interpolate(mask_float, size=(h_i, w_i), mode='nearest')
-            
+
+            mask_resized = F.interpolate(mask_float, size=(h_i, w_i), mode='area')
+
             # Using standard rounding for flat view just in case
-            mask_flat = mask_resized.view(1, sequence_length)  # Shape: (1, N)
+            mask_flat = (mask_resized > 0.0).view(1, sequence_length)  # Shape: (1, N)
             
             # 3. Build the Bias Matrix B
             Q_mask = mask_flat.unsqueeze(-1) # Queries
@@ -53,7 +54,7 @@ class MaskedSelfAttnProcessor:
             
             # Create the bias tensor using the safest minimum float value
             bias = torch.zeros((1, 1, sequence_length, sequence_length), device=query.device, dtype=query.dtype)
-            min_float = torch.finfo(query.dtype).min # Safer than -10000.0, especially for fp16
+            min_float = torch.finfo(query.dtype).min
             bias.masked_fill_(forbidden, min_float)
             
             # Expand to match batch size (for CFG) and heads
