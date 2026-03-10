@@ -61,6 +61,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="which pipeline version to import")
+    
+    parser.add_argument("--pp_feather_kernel_size", default=21, type=int, help="feathering kernel size for preprocessing")
+    parser.add_argument("--pp_dilate_kernel_size", default=15, type=int, help="dilation kernel size for preprocessing")
+    parser.add_argument("--use_negative_prompt", action='store_true', help="dilation kernel size for preprocessing")
 
     # Soft masking in cross attention
     parser.add_argument("--sm_dilation_kernel", default=5, type=int, help="dilation kernel for soft masking")

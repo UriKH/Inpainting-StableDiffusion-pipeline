@@ -7,10 +7,11 @@ import numpy as np
 
 
 class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
-    def __init__(self, dilate_kernel_size=15, feather_kernel_size=21, *args, **kwargs):
+    def __init__(self, pp_dilate_kernel_size=15, pp_feather_kernel_size=21, use_negative_prompt=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dilate_kernel_size = dilate_kernel_size
-        self.feather_kernel_size = feather_kernel_size
+        self.pp_dilate_kernel_size = pp_dilate_kernel_size
+        self.pp_feather_kernel_size = pp_feather_kernel_size
+        self.use_negative_prompt = use_negative_prompt
 
     def encode_prompt(self, prompt, text_encoder, tokenizer):
         text_input = tokenizer(
@@ -19,7 +20,7 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
         text_embeddings = text_encoder(text_input.input_ids.to(self.device))[0]
         uncond_input = tokenizer(
             [
-                "ugly, tiling, poorly drawn, out of frame, deformed, blurry, bad anatomy, bad proportions, extra limbs, artifacts, miniature scene, entire picture, out of context, mismatched lighting"
+                "ugly, tiling, poorly drawn, out of frame, deformed, blurry, bad anatomy, bad proportions, extra limbs, artifacts, miniature scene, entire picture, out of context, mismatched lighting" if self.use_negative_prompt else ""
             ],
             padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
         )
@@ -32,9 +33,12 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
         Enhances the mask using Dilation and Feathering to prevent 'cut' edges.
         """
         mask_np = np.array(mask_image.convert("L"))
-        kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (self.dilate_kernel_size, self.dilate_kernel_size))
+        kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (self.pp_dilate_kernel_size, self.pp_dilate_kernel_size))
         mask_dilated = cv.dilate(mask_np, kernel, iterations=1)
-        feathered_mask = cv.GaussianBlur(mask_dilated, (self.feather_kernel_size, self.feather_kernel_size), 0)
+        if self.pp_feather_kernel_size != 1:
+            feathered_mask = cv.GaussianBlur(mask_dilated, (self.pp_feather_kernel_size, self.pp_feather_kernel_size), 0)
+        else:
+            feathered_mask = mask_dilated
         return Image.fromarray(feathered_mask)
 
     def preprocess(self, pipe_in: InpaintPipelineInput):
