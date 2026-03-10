@@ -62,7 +62,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         if self.reconstruction:
             init_step = min(int(num_inference_steps * (1 - self.init_noise_strength)), num_inference_steps - 1)
             timesteps = self.scheduler.timesteps[init_step:]
-            latents = self.scheduler.add_noise(init_latents, noise, timesteps[init_step])
+            latents = self.scheduler.add_noise(init_latents, noise, timesteps[0])
         else:
             latents = ((self.scheduler.add_noise(init_latents, noise, timesteps[0]) * (1 - mask_tensor))
                        + (noise * mask_tensor))
