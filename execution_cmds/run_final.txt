@@ -51,16 +51,16 @@ python ./data_generator.py --version 12 --reconstruction ./data/coco/validation/
 python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v12/
 
 echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,5) >>>>>>>>>>>>>>>>>>>>"
-python ./data_generator.py --version 13 --reconstruction ./data/coco/validation/ ./results_final/validation/v13/
-python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13/
+python ./data_generator.py --version 13 --reconstruction ./data/coco/validation/ ./results_final/validation/v13_3_5_5/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13_3_5_5/
 
 echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,4.5) >>>>>>>>>>>>>>>>>>>>"
-python ./data_generator.py --version 13 --reconstruction --sm_sigma 4.5 ./data/coco/validation/ ./results_final/validation/v13/
-python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13/
+python ./data_generator.py --version 13 --reconstruction --sm_sigma 4.5 ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5/
 
-echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,4.5) >>>>>>>>>>>>>>>>>>>>"
-python ./data_generator.py --version 13 --reconstruction --sm_sigma 4.5 --use_freeu ./data/coco/validation/ ./results_final/validation/v13/
-python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13/
+echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,4.5) freeu >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 13 --reconstruction --sm_sigma 4.5 --use_freeu ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5_freeu/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5_freeu/
 
 echo ">>>>>>>>>>>>>>>>>>>> v14 >>>>>>>>>>>>>>>>>>>>"
 python ./data_generator.py --version 14 --reconstruction ./data/coco/validation/ ./results_final/validation/v14/
