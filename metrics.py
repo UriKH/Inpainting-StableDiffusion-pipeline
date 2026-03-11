@@ -50,8 +50,8 @@ class COCOInpaintingMetricsScorer:
 
         # Text-Alignment Metric
         print("Loading CLIP model...")
-        self.clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch16").to(self.device)
-        self.clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch16")
+        self.clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch16", use_safetensors=True).to(self.device)
+        self.clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch16", use_safetensors=True)
         self.clip_scores = []
 
         # Reconstruction Metrics
