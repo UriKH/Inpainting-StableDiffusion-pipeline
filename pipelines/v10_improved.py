@@ -1,12 +1,21 @@
 from pipelines.v9_improved import ImprovedInpaintPipelineV9
 import torch
+import math
 
 
 class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
-    def __init__(self, rp_jump_length=10, rp_jump_n_sample=2, **kwargs):
+    def __init__(self, rp_jump_length=10, rp_jump_n_sample=2,
+                 ds_min_jumps=1, ds_min_jump_len=5, ds_max_jumps=4, ds_max_jump_len=10,
+                 use_dynamic_schedule=False,
+                 **kwargs):
         super().__init__(**kwargs)
         self.jump_length = rp_jump_length
         self.jump_n_sample = rp_jump_n_sample
+        self.ds_min_jumps = ds_min_jumps
+        self.ds_min_jump_len = ds_min_jump_len
+        self.ds_max_jumps = ds_max_jumps
+        self.ds_max_jump_len = ds_max_jump_len
+        self.use_dynamic_schedule = use_dynamic_schedule
     
     def _get_repaint_schedule(self, num_inference_steps):
         """Generates the RePaint sequence of timestep indices."""
@@ -26,26 +35,42 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
                 if (i + 1) % self.jump_length == 0:
                     jumps_done = 0
                 i += 1
-
         return schedule_indices
 
     def _get_dynamic_schedule(self, num_inference_steps):
         """Generates the dynamic sequence of timestep indices."""
-        pass
+        times = list(range(num_inference_steps))
+        schedule_indices = []
+        i = 0
+
+        while i < len(times):
+            progress = i / len(times)
+            curr_jump_length = int(math.cos(progress * math.pi / 2.) * (self.ds_max_jump_len - self.ds_min_jump_len) +  self.ds_min_jump_len)
+            curr_jumps = int(math.cos(progress * math.pi / 2.) * (self.ds_max_jumps - self.ds_min_jumps) + self.ds_min_jumps)
+
+            slice_len = min(curr_jump_length, len(times) - i)
+            schedule_indices.extend([i + v for v in range(slice_len)] * curr_jumps)
+            i += curr_jump_length
+        return schedule_indices
 
     @torch.no_grad()
     def _initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
         noise = torch.randn_like(init_latents)
-        timesteps = self.scheduler.timesteps
 
+        timesteps = self.scheduler.timesteps
         if self.reconstruction:
             init_step = min(int(num_inference_steps * (1 - self.init_noise_strength)), num_inference_steps - 1)
             timesteps = self.scheduler.timesteps[init_step:]
-            schedule_indices = self._get_repaint_schedule(len(timesteps))
-            latents = self.scheduler.add_noise(init_latents, noise, timesteps[schedule_indices[0]])
+
+        if self.use_dynamic_schedule:
+            schedule_indices = self._get_dynamic_schedule(len(timesteps))
         else:
             schedule_indices = self._get_repaint_schedule(len(timesteps))
+
+        if self.reconstruction:
+            latents = self.scheduler.add_noise(init_latents, noise, timesteps[schedule_indices[0]])
+        else:
             latents = ((self.scheduler.add_noise(init_latents, noise, timesteps[schedule_indices[0]])
                         * (1 - mask_tensor)) + (noise * mask_tensor))
         return latents, timesteps, schedule_indices

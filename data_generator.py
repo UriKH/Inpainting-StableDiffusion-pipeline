@@ -64,8 +64,8 @@ if __name__ == "__main__":
 
     # Self-attention dilation thresholds
     parser.add_argument("--sa_dilation_threshold", default=0.0, type=float, help="binary interpolation threshold for self attention")
-    parser.add_argument("--sa_resize_mode", default='area', type=str, help="interpolation mode for self attention")
-    parser.add_argument("--ca_resize_mode", default='area', type=str, help="interpolation mode for cross attention")
+    parser.add_argument("--sa_resize_mode", default='nearest', type=str, help="interpolation mode for self attention")
+    parser.add_argument("--ca_resize_mode", default='nearest', type=str, help="interpolation mode for cross attention")
 
     # Preprocessing mask dilation and feathering
     parser.add_argument("--pp_feather_radius", default=5, type=int, help="feathering kernel size for preprocessing")
@@ -81,6 +81,11 @@ if __name__ == "__main__":
     # resampling time travel
     parser.add_argument("--rp_jump_length", default=7, type=int, help="jump length for resampling")
     parser.add_argument("--rp_jump_n_sample", default=2, type=int, help="number of jumps for resampling")
+    parser.add_argument("--ds_min_jumps", default=1, type=int, help="min number of jumps for resampling")
+    parser.add_argument("--ds_max_jumps", default=4, type=int, help="max number of jumps for resampling")
+    parser.add_argument("--ds_min_jump_len", default=5, type=int, help="min jump length for resampling")
+    parser.add_argument("--ds_max_jump_len", default=10, type=int, help="max jump length for resampling")
+    parser.add_argument("--use_dynamic_schedule", action='store_true', help="use dynamic schedule for resampling")
 
     # Dynamic Mask Blending
     parser.add_argument("--dmb_dilation_kernel_size", default=3, type=int,
