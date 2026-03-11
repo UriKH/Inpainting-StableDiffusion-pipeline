@@ -202,4 +202,4 @@ class COCOInpaintingMetricsScorer:
         pad_h = (patch_size - h % patch_size) % patch_size
         pad_w = (patch_size - w % patch_size) % patch_size
         img_padded = F.pad(img_normalized, (0, pad_w, 0, pad_h), mode='constant', value=0)
-        return img_padded.unsqueeze(0)
+        return img_padded
