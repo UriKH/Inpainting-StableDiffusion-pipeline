@@ -62,13 +62,13 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="which pipeline version to import")
     
-    parser.add_argument("--pp_feather_kernel_size", default=5, type=int, help="feathering kernel size for preprocessing")
-    parser.add_argument("--pp_dilate_kernel_size", default=3, type=int, help="dilation kernel size for preprocessing")
+    parser.add_argument("--pp_feather_kernel_size", default=21, type=int, help="feathering kernel size for preprocessing")
+    parser.add_argument("--pp_dilate_kernel_size", default=15, type=int, help="dilation kernel size for preprocessing")
     parser.add_argument("--use_negative_prompt", action='store_true', help="dilation kernel size for preprocessing")
 
     # Soft masking in cross attention
-    parser.add_argument("--sm_dilation_kernel", default=5, type=int, help="dilation kernel for soft masking")
-    parser.add_argument("--sm_blur_kernel", default=15, type=int, help="blurring kernel for soft masking")
+    parser.add_argument("--sm_dilation_kernel", default=3, type=int, help="dilation kernel for soft masking")
+    parser.add_argument("--sm_blur_kernel", default=5, type=int, help="blurring kernel for soft masking")
     parser.add_argument("--sm_sigma", default=5.0, type=float, help="sigma for soft masking")
     parser.add_argument("--use_sm_in_sa", action='store_true', help="use soft masking in self-attention")
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     parser.add_argument("--use_freeu", action='store_true', help="use FreeU")
 
     parser.add_argument("--version", type=int, required=True, help="insert the version number (0 for vanilla)")
-    parser.add_argument("--init_noise_strength", default=0.98, type=float, help="init noise strength")
+    parser.add_argument("--init_noise_strength", default=1.0, type=float, help="init noise strength")
     parser.add_argument("--reconstruction", action='store_true', help="reconstruction or replace")
 
     input_paths, output_paths = input_output_paths_args(parser)

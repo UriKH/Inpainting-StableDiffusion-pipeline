@@ -88,9 +88,10 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
             latents = self.scheduler.step(noise_pred, t, latents).prev_sample
 
             # Update timesteps and add noise
-            if i < len(timesteps) - 1:
-                t_next = timesteps[i + 1]
-
+            #if i < len(timesteps) - 1:
+            #    t_next = timesteps[i + 1]
+            if i < len(self.scheduler.timesteps) - 1:
+                t_next = self.scheduler.timesteps[i+1]
                 # Add noise to the original image matching the level we JUST stepped to
                 noise = torch.randn_like(init_latents)
                 known_background = self.scheduler.add_noise(init_latents, noise, t_next)
