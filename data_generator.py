@@ -63,7 +63,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="which pipeline version to import")
 
     # Self-attention dilation thresholds
-    parser.add_argument("--sa_dilation_threshold", default=0.0, type=float, help="dilation threshold for self attention")
+    parser.add_argument("--sa_dilation_threshold", default=0.0, type=float, help="binary interpolation threshold for self attention")
+    parser.add_argument("--sa_resize_mode", default='area', type=str, help="interpolation mode for self attention")
 
     # Preprocessing mask dilation and feathering
     parser.add_argument("--pp_feather_radius", default=5, type=int, help="feathering kernel size for preprocessing")

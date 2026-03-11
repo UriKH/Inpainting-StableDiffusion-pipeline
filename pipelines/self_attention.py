@@ -9,6 +9,7 @@ class MaskedSelfAttnProcessor:
         self.latent_h = latent_h
         self.latent_w = latent_w
         self.dilation_threshold = 0.0
+        self.resize_mode = None
         self.mask_tensor = None  # Expected shape: (1, 1, H, W) where 1 is the hole
 
     def __call__(self, attn, hidden_states, encoder_hidden_states=None, attention_mask=None, temb=None, *args, **kwargs):
@@ -41,11 +42,10 @@ class MaskedSelfAttnProcessor:
             # Convert mask to float to prevent F.interpolate crashes
             mask_float = self.mask_tensor.to(dtype=query.dtype, device=query.device)
 
-            mask_resized = F.interpolate(mask_float, size=(h_i, w_i), mode='area')
-
+            mask_resized = F.interpolate(mask_float, size=(h_i, w_i), mode=self.resize_mode)
             # Using standard rounding for flat view just in case
             mask_flat = (mask_resized > self.dilation_threshold).view(1, sequence_length)  # Shape: (1, N)
-            
+
             # 3. Build the Bias Matrix B
             Q_mask = mask_flat.unsqueeze(-1) # Queries
             K_mask = mask_flat.unsqueeze(-2) # Keys
