@@ -5,8 +5,9 @@ from diffusers.models.attention_processor import AttnProcessor2_0
 
 
 class ImprovedInpaintPipelineV8(ImprovedInpaintPipelineV7):
-    def __init__(self, **kwargs):
+    def __init__(self, sa_dilation_threshold: float = 0.0, **kwargs):
         super().__init__(**kwargs)
+        self.sa_dilation_threshold = sa_dilation_threshold
 
     def _inject_masked_attention(self, latent_h, latent_w, self_mask):
         """Injects custom processors into the UNet."""
@@ -15,6 +16,7 @@ class ImprovedInpaintPipelineV8(ImprovedInpaintPipelineV7):
             if "attn1" in name:  # Self-Attention Layers
                 processor = MaskedSelfAttnProcessor(latent_h, latent_w)
                 processor.mask_tensor = self_mask
+                processor.dilation_threshold = self.sa_dilation_threshold
                 processor_dict[name] = processor
             else:
                 processor_dict[name] = AttnProcessor2_0()

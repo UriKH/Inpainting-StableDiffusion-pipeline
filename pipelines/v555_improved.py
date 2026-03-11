@@ -6,7 +6,7 @@ import cv2 as cv
 import numpy as np
 
 
-class ImprovedInpaintPipelineV55(ImprovedInpaintPipelineV3):
+class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
     def __init__(self, pp_dilate_kernel_size=3, pp_feather_kernel_size=5, use_negative_prompt=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pp_dilate_kernel_size = pp_dilate_kernel_size
@@ -33,17 +33,16 @@ class ImprovedInpaintPipelineV55(ImprovedInpaintPipelineV3):
         Enhances the mask using Dilation and Feathering to prevent 'cut' edges.
         """
         mask_np = np.array(mask_image.convert("L"))
-        kernel = np.ones((self.pp_dilate_kernel_size, self.pp_dilate_kernel_size), np.uint8)
+        kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (self.pp_dilate_kernel_size, self.pp_dilate_kernel_size))
         mask_dilated = cv.dilate(mask_np, kernel, iterations=1)
         if self.pp_feather_kernel_size != 1:
-            mask_pil = Image.fromarray(mask_dilated).filter(ImageFilter.GaussianBlur(radius=self.pp_feather_kernel_size))
+            feathered_mask = cv.GaussianBlur(mask_dilated, (self.pp_feather_kernel_size, self.pp_feather_kernel_size), 0)
         else:
-            mask_pil = Image.fromarray(mask_dilated)
-        return mask_pil
+            feathered_mask = mask_dilated
+        return Image.fromarray(feathered_mask)
 
     def preprocess(self, pipe_in: InpaintPipelineInput):
         org_mask = pipe_in.mask_image
         pipe_in.mask_image = self.mask_preprocessing(pipe_in.mask_image)
         pipe_in.init_image = self.image_preprocessing(pipe_in.init_image, org_mask)
         return pipe_in
-

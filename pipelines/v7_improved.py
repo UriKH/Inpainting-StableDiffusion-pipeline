@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):
-    def __init__(self, sm_dilation_kernel=5, sm_blur_kernel=15, sm_sigma=5.0, **kwargs):
+    def __init__(self, sm_dilation_kernel=3, sm_blur_kernel=5, sm_sigma=5.0, **kwargs):
         super().__init__(**kwargs)
 
         self.dilation_kernel = sm_dilation_kernel

@@ -10,13 +10,18 @@ import cv2 as cv
 class InpaintPipelineVanilla(InpaintingPipeLineScheme):
     MODEL_ID = "Manojb/stable-diffusion-2-base"
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-    SD_SCALE_FACTOR = 0.18215
     CFG_SCALE_FACTOR = 7.5
 
     def __init__(self, model_id=MODEL_ID, device=DEVICE, **kwargs):
         super().__init__(model_id, device, **kwargs)
 
-    def encode_prompt(self, prompt, text_encoder, tokenizer):
+    def encode_prompt(self, prompt: str, text_encoder, tokenizer):
+        """
+        Create the prompt embeddings and the unconditional prompt embeddings.
+        :param prompt: The prompt to encode
+        :param text_encoder: The text encoder model
+        :param tokenizer: The tokenizer model
+        """
         text_input = tokenizer(
             prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt"
         )
@@ -31,7 +36,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         image_tensor = torch.from_numpy(image_np).permute(2, 0, 1).unsqueeze(0).to(self.device)
         with torch.no_grad():
             init_latents = self.vae.encode(image_tensor).latent_dist.sample()
-            init_latents = self.SD_SCALE_FACTOR * init_latents
+            init_latents = self.vae.config.scaling_factor * init_latents
         return init_latents
 
     def prepare_mask_tensor(self, mask_image):
@@ -44,7 +49,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
 
     def decode_latents(self, latents) -> Image.Image:
         with torch.no_grad():
-            latents = 1 / self.SD_SCALE_FACTOR * latents
+            latents = latents / self.vae.config.scaling_factor
             image = self.vae.decode(latents).sample
 
         # Convert back to a PIL image
@@ -88,10 +93,8 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
             latents = self.scheduler.step(noise_pred, t, latents).prev_sample
 
             # Update timesteps and add noise
-            #if i < len(timesteps) - 1:
-            #    t_next = timesteps[i + 1]
-            if i < len(self.scheduler.timesteps) - 1:
-                t_next = self.scheduler.timesteps[i+1]
+            if i < len(timesteps) - 1:
+                t_next = timesteps[i + 1]
                 # Add noise to the original image matching the level we JUST stepped to
                 noise = torch.randn_like(init_latents)
                 known_background = self.scheduler.add_noise(init_latents, noise, t_next)

@@ -9,7 +9,7 @@ class ImprovedInpaintPipelineV1(InpaintPipelineVanilla):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
      
-    def image_preprocessing(self, real_image, mask_image):
+    def image_preprocessing(self, real_image: Image.Image, mask_image: Image.Image):
         real_arr = np.array(real_image)
         mask_arr = np.array(mask_image)
         mask_bool = mask_arr == 255

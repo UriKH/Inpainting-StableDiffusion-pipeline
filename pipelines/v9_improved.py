@@ -16,10 +16,12 @@ class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):
             if "attn1" in name:  # Self-Attention Layers
                 processor = MaskedSelfAttnProcessor(latent_h, latent_w)
                 processor.mask_tensor = self_mask
+                processor.dilation_threshold = self.sa_dilation_threshold
                 processor_dict[name] = processor
             elif "attn2" in name:  # Cross-Attention Layers
                 processor = MaskedCrossAttnProcessor(latent_h, latent_w)
                 processor.mask_tensor = cross_mask
+                processor.dilation_threshold = self.ca_dilation_threshold
                 processor_dict[name] = processor
             else:
                 processor_dict[name] = AttnProcessor2_0()

@@ -61,12 +61,17 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="which pipeline version to import")
-    
-    parser.add_argument("--pp_feather_kernel_size", default=5, type=int, help="feathering kernel size for preprocessing")
+
+    # Cross-attention and self-attention dilation thresholds
+    parser.add_argument("--ca_dilation_threshold", default=0.0, type=float, help="dilation threshold for cross attention")
+    parser.add_argument("--sa_dilation_threshold", default=0.0, type=float, help="dilation threshold for self attention")
+
+    # Preprocessing mask dilation and feathering
+    parser.add_argument("--pp_feather_radius", default=5, type=int, help="feathering kernel size for preprocessing")
     parser.add_argument("--pp_dilate_kernel_size", default=3, type=int, help="dilation kernel size for preprocessing")
     parser.add_argument("--use_negative_prompt", action='store_true', help="dilation kernel size for preprocessing")
 
-    # Soft masking in cross attention
+    # Soft masking in cross-attention
     parser.add_argument("--sm_dilation_kernel", default=3, type=int, help="dilation kernel for soft masking")
     parser.add_argument("--sm_blur_kernel", default=5, type=int, help="blurring kernel for soft masking")
     parser.add_argument("--sm_sigma", default=5.0, type=float, help="sigma for soft masking")
