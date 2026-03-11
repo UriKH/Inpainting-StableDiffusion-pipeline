@@ -180,7 +180,19 @@ class COCOInpaintingMetricsScorer:
 
     def _get_dino_similarity(self, img1, img2):
         with torch.no_grad():
-            feat1 = self.dinov2(img1)
-            feat2 = self.dinov2(img2)
+            feat1 = self.dinov2(self._prepare_for_dino(img1))
+            feat2 = self.dinov2(self._prepare_for_dino(img2))
             sim = F.cosine_similarity(feat1, feat2)
         return sim.mean()
+
+    @staticmethod
+    def _prepare_for_dino(img_tensor, patch_size=14):
+        """
+        Standardizes image size for DINOv2 without distortion.
+        Expects img_tensor as (C, H, W)
+        """
+        h, w = img_tensor.shape[-2:]
+        pad_h = (patch_size - h % patch_size) % patch_size
+        pad_w = (patch_size - w % patch_size) % patch_size
+        img_padded = F.pad(img_tensor, (0, pad_w, 0, pad_h), mode='constant', value=0)
+        return img_padded.unsqueeze(0)
