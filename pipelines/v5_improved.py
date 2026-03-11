@@ -7,7 +7,7 @@ import numpy as np
 
 
 class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
-    def __init__(self, pp_dilate_kernel_size=15, pp_feather_kernel_size=21, use_negative_prompt=True, *args, **kwargs):
+    def __init__(self, pp_dilate_kernel_size=3, pp_feather_kernel_size=5, use_negative_prompt=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pp_dilate_kernel_size = pp_dilate_kernel_size
         self.pp_feather_kernel_size = pp_feather_kernel_size
