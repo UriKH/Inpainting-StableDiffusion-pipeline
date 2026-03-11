@@ -72,7 +72,7 @@ class COCOInpaintingMetricsScorer:
         self.psnr = PeakSignalNoiseRatio(data_range=1.0).to(self.device)
 
         print('Loading DISTS model...')
-        self.dists = DISTS(device=self.device)
+        self.dists = DISTS().to(self.device)
         self.dists_scores = []
 
         print('Loading DINOv2 model...')
@@ -191,8 +191,15 @@ class COCOInpaintingMetricsScorer:
         Standardizes image size for DINOv2 without distortion.
         Expects img_tensor as (C, H, W)
         """
-        h, w = img_tensor.shape[-2:]
+        if img_tensor.dim() == 3:
+            img_tensor = img_tensor.unsqueeze(0)
+
+        mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).to(img_tensor.device)
+        std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).to(img_tensor.device)
+        img_normalized = (img_tensor - mean) / std
+        
+        h, w = img_normalized.shape[-2:]
         pad_h = (patch_size - h % patch_size) % patch_size
         pad_w = (patch_size - w % patch_size) % patch_size
-        img_padded = F.pad(img_tensor, (0, pad_w, 0, pad_h), mode='constant', value=0)
+        img_padded = F.pad(img_normalized, (0, pad_w, 0, pad_h), mode='constant', value=0)
         return img_padded.unsqueeze(0)
