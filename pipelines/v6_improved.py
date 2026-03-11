@@ -1,10 +1,10 @@
 from pipelines.cross_attention import MaskedCrossAttnProcessor
-from pipelines.v5_improved import ImprovedInpaintPipelineV55
+from pipelines.v5_improved import ImprovedInpaintPipelineV5
 import torch
 from diffusers.models.attention_processor import AttnProcessor2_0
 
 
-class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV55):
+class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
     def __init__(self, ca_dilation_threshold: float = 0.0, **kwargs):
         super().__init__(**kwargs)
         self.ca_dilation_threshold = ca_dilation_threshold
