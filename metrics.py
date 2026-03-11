@@ -12,6 +12,8 @@ from PIL import Image
 import sys
 import os
 import numpy as np
+from DISTS_pytorch import DISTS
+
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 fixed_versions_dir = os.path.dirname(current_dir)
@@ -32,9 +34,13 @@ class COCOInpaintingMetricsScorer:
     CLIP_SCORE = 'CLIP score'
     MSE = 'MSE'
     PSNR = 'PSNR'
-    METRICS = [FID, SSIM, LPIPS, CLIP_SCORE, MSE, PSNR]
-    METRIC_BEST_HIGHEST = {FID: False, SSIM: True, LPIPS: False, CLIP_SCORE: True, MSE: False, PSNR: True}
-    
+    DISTS = 'DISTS'
+    DINO_VITS = 'DINOv2'
+    METRICS = [FID, SSIM, LPIPS, CLIP_SCORE, MSE, PSNR, DISTS, DINO_VITS]
+    METRIC_BEST_HIGHEST = {
+        FID: False, SSIM: True, LPIPS: False, CLIP_SCORE: True, MSE: False, PSNR: True, DISTS: False, DINO_VITS: True
+    }
+
     def __init__(self, device="cuda"):
         self.device = device
 
@@ -64,6 +70,15 @@ class COCOInpaintingMetricsScorer:
         print('Loading MSE and PSNR models...')
         self.mse = MeanSquaredError().to(self.device)
         self.psnr = PeakSignalNoiseRatio(data_range=1.0).to(self.device)
+
+        print('Loading DISTS model...')
+        self.dists = DISTS().to(self.device)
+        self.dists_scores = []
+
+        print('Loading DINOv2 model...')
+        self.dinov2 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14').to(self.device)
+        self.dinov2.eval()
+        self.dinov2_scores = []
 
         self.ratio_buckets = {f'{i}-{i+5}': 0 for i in range(0, 91, 5)}
         self.bucket_keys_map = {i: f'{i}-{i+5}' for i in range(0, 91, 5)}
@@ -111,6 +126,9 @@ class COCOInpaintingMetricsScorer:
         self.lpips.update(gen_tensor, real_tensor)
         self.mse.update(gen_tensor, real_tensor)
         self.psnr.update(gen_tensor, real_tensor)
+        self.dists_scores.append(self.dists(real_tensor, gen_tensor))
+        self.dinov2_scores.append(self._get_dino_similarity(real_tensor, gen_tensor))
+
 
     def compute_metrics(self) -> dict:
         """Calculates and returns the final scores across all updated images."""
@@ -125,6 +143,8 @@ class COCOInpaintingMetricsScorer:
             self.LPIPS: float(self.lpips.compute()),
             self.MSE: float(self.mse.compute()),
             self.PSNR: float(self.psnr.compute()),
+            self.DISTS: float(sum(self.dists_scores) / len(self.dists_scores)),
+            self.DINO_VITS: float(sum(self.dinov2_scores) / len(self.dinov2_scores)),
             'ratio buckets': self.ratio_buckets
         }
 
@@ -157,3 +177,29 @@ class COCOInpaintingMetricsScorer:
 
         self.update_fid_clip(real_image, generated_image, prompt)
         self.update_reconstruction(real_image, generated_image)
+
+    def _get_dino_similarity(self, img1, img2):
+        with torch.no_grad():
+            feat1 = self.dinov2(self._prepare_for_dino(img1))
+            feat2 = self.dinov2(self._prepare_for_dino(img2))
+            sim = F.cosine_similarity(feat1, feat2)
+        return sim.mean()
+
+    @staticmethod
+    def _prepare_for_dino(img_tensor, patch_size=14):
+        """
+        Standardizes image size for DINOv2 without distortion.
+        Expects img_tensor as (C, H, W)
+        """
+        if img_tensor.dim() == 3:
+            img_tensor = img_tensor.unsqueeze(0)
+
+        mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).to(img_tensor.device)
+        std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).to(img_tensor.device)
+        img_normalized = (img_tensor - mean) / std
+        
+        h, w = img_normalized.shape[-2:]
+        pad_h = (patch_size - h % patch_size) % patch_size
+        pad_w = (patch_size - w % patch_size) % patch_size
+        img_padded = F.pad(img_normalized, (0, pad_w, 0, pad_h), mode='constant', value=0)
+        return img_padded.unsqueeze(0)
