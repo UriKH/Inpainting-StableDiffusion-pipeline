@@ -62,8 +62,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="which pipeline version to import")
 
-    # Cross-attention and self-attention dilation thresholds
-    parser.add_argument("--ca_dilation_threshold", default=0.0, type=float, help="dilation threshold for cross attention")
+    # Self-attention dilation thresholds
     parser.add_argument("--sa_dilation_threshold", default=0.0, type=float, help="dilation threshold for self attention")
 
     # Preprocessing mask dilation and feathering

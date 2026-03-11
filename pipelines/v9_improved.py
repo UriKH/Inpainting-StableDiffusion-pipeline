@@ -21,7 +21,6 @@ class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):
             elif "attn2" in name:  # Cross-Attention Layers
                 processor = MaskedCrossAttnProcessor(latent_h, latent_w)
                 processor.mask_tensor = cross_mask
-                processor.dilation_threshold = self.ca_dilation_threshold
                 processor_dict[name] = processor
             else:
                 processor_dict[name] = AttnProcessor2_0()

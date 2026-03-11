@@ -12,7 +12,6 @@ class MaskedCrossAttnProcessor:
         self.latent_h = latent_h
         self.latent_w = latent_w
         self.mask_tensor = None  # Will be dynamically injected
-        self.dilation_threshold = 0.0
         self.default_processor = AttnProcessor2_0()
 
     def __call__(self, attn, hidden_states, encoder_hidden_states=None, attention_mask=None, temb=None, *args, **kwargs):
@@ -38,7 +37,7 @@ class MaskedCrossAttnProcessor:
         # mask_resized = F.interpolate(self.mask_tensor, size=(h_i, w_i), mode='nearest')
 
         mask_resized = F.interpolate(self.mask_tensor, size=(h_i, w_i), mode='area')
-        mask_flat = (mask_resized > self.dilation_threshold).view(1, N, 1).to(res.device)
+        mask_flat = mask_resized.view(1, N, 1).to(res.device)
 
         # Flatten to match the sequence length: shape (1, N, 1)
         # mask_flat = mask_resized.view(1, N, 1).to(res.device)
