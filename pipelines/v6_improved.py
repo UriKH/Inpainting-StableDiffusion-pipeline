@@ -5,8 +5,9 @@ from diffusers.models.attention_processor import AttnProcessor2_0
 
 
 class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
-    def __init__(self, **kwargs):
+    def __init__(self, ca_resize_mode = 'area', **kwargs):
         super().__init__(**kwargs)
+        self.ca_resize_mode = ca_resize_mode
 
     def _inject_masked_attention(self, latent_h, latent_w, mask_tensor):
         """Replaces standard cross-attention with our Masked processor."""
@@ -15,6 +16,7 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
             if "attn2" in name:  # The standard naming convention for cross-attention
                 processor = MaskedCrossAttnProcessor(latent_h, latent_w)
                 processor.mask_tensor = mask_tensor
+                processor.resize_mode = self.ca_resize_mode
                 processor_dict[name] = processor
             else:
                 processor_dict[name] = AttnProcessor2_0() # Keep self-attention default
