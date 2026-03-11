@@ -1,10 +1,10 @@
 from pipelines.cross_attention import MaskedCrossAttnProcessor
-from pipelines.v3_improved import ImprovedInpaintPipelineV3
+from pipelines.v55_improved import ImprovedInpaintPipelineV55
 import torch
 from diffusers.models.attention_processor import AttnProcessor2_0
 
 
-class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV3):
+class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV55):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
