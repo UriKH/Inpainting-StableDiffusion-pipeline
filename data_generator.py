@@ -79,8 +79,8 @@ if __name__ == "__main__":
     parser.add_argument("--use_sm_in_sa", action='store_true', help="use soft masking in self-attention")
 
     # resampling time travel
-    parser.add_argument("--rp_jump_length", default=10, type=int, help="jump length for resampling")
-    parser.add_argument("--rp_jump_n_sample", default=2, type=int, help="number of jumps for resampling")
+    parser.add_argument("--rp_jump_length", default=7, type=int, help="jump length for resampling")
+    parser.add_argument("--rp_jump_n_sample", default=3, type=int, help="number of jumps for resampling")
     parser.add_argument("--ds_min_jumps", default=1, type=int, help="min number of jumps for resampling")
     parser.add_argument("--ds_max_jumps", default=4, type=int, help="max number of jumps for resampling")
     parser.add_argument("--ds_min_jump_len", default=5, type=int, help="min jump length for resampling")
