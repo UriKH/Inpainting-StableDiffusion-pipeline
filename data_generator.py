@@ -71,6 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--pp_feather_radius", default=5, type=int, help="feathering kernel size for preprocessing")
     parser.add_argument("--pp_dilate_kernel_size", default=3, type=int, help="dilation kernel size for preprocessing")
     parser.add_argument("--use_negative_prompt", action='store_true', help="dilation kernel size for preprocessing")
+    parser.add_argument("--ignore_improvement_v5", action='store_true', help="remove effect of V5 (mask preprocessing and negative prompt)")
 
     # Soft masking in cross-attention
     parser.add_argument("--sm_dilation_kernel", default=3, type=int, help="dilation kernel for soft masking")

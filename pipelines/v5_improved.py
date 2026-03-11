@@ -7,11 +7,13 @@ import numpy as np
 
 
 class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
-    def __init__(self, pp_dilate_kernel_size=3, pp_feather_radius=5, use_negative_prompt=True, *args, **kwargs):
+    def __init__(self, pp_dilate_kernel_size=3, pp_feather_radius=5, use_negative_prompt=True,
+                 ignore_improvement_v5 = False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pp_dilate_kernel_size = pp_dilate_kernel_size
         self.pp_feather_radius = pp_feather_radius
         self.use_negative_prompt = use_negative_prompt
+        self.ignore_improvement_v5 = ignore_improvement_v5
 
     def encode_prompt(self, prompt, text_encoder, tokenizer):
         text_input = tokenizer(
@@ -21,7 +23,7 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
         uncond_input = tokenizer(
             [
                 "ugly, tiling, poorly drawn, out of frame, deformed, blurry, bad anatomy, bad proportions, extra limbs, artifacts, miniature scene, entire picture, out of context, mismatched lighting"
-                if self.use_negative_prompt else ""
+                if self.use_negative_prompt and not self.ignore_improvement_v5 else ""
             ],
             padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
         )
@@ -33,6 +35,9 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
         """
         Enhances the mask using Dilation and Feathering to prevent 'cut' edges.
         """
+        if self.ignore_improvement_v5:
+            return super().mask_preprocessing(mask_image)
+
         mask_np = np.array(mask_image.convert("L"))
         kernel = np.ones((self.pp_dilate_kernel_size, self.pp_dilate_kernel_size), np.uint8)
         mask_dilated = cv.dilate(mask_np, kernel, iterations=1)
@@ -43,6 +48,9 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
         return mask_pil
 
     def preprocess(self, pipe_in: InpaintPipelineInput):
+        if self.ignore_improvement_v5:
+            return super().preprocess(pipe_in)
+
         org_mask = pipe_in.mask_image
         pipe_in.mask_image = self.mask_preprocessing(pipe_in.mask_image)
         pipe_in.init_image = self.image_preprocessing(pipe_in.init_image, org_mask)
