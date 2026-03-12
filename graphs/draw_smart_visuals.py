@@ -66,7 +66,7 @@ def create_heatmap(df):
         norm_df, 
         annot=pivot_df,          # Show true scores
         fmt=".3g",               # Format to 3 significant digits
-        cmap="Blues",            # Dark blue = best performance
+        cmap="flare",            # Dark blue = best performance
         cbar=False,              # Hide colorbar since scales are mixed
         linewidths=.5,
         linecolor='lightgray'
@@ -117,7 +117,7 @@ def create_radar_chart(df, selected_folders=None):
     ax.set_yticklabels([])
     
     # Color palette
-    colors = plt.cm.Set1(np.linspace(0, 1, len(norm_df.index)))
+    colors = sns.color_palette("husl", len(norm_df.index))
 
     # Plot each pipeline
     for idx, (folder_name, row) in enumerate(norm_df.iterrows()):
@@ -125,7 +125,7 @@ def create_radar_chart(df, selected_folders=None):
         values += values[:1] # Close the loop
         
         ax.plot(angles, values, linewidth=2, linestyle='solid', label=folder_name, color=colors[idx])
-        ax.fill(angles, values, color=colors[idx], alpha=0.1)
+        ax.fill(angles, values, color=colors[idx], alpha=0.2)
 
     plt.title("Radar Chart: Normalized Metric Performance\n(Further Out = Better)", size=14, fontweight='bold', pad=20)
     plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
