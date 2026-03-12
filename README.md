@@ -41,6 +41,7 @@ python data_generator.py --version <version_number> <input_args> <output_args>
   ```bash
   python data_generator.py -h
   ```
+* Note: Please note that `utils/globals.py` might need to be altered and contain the correct paths to your COCO data files. 
 
 ### 3. Evaluating Metrics
 Calculate quantitative metrics to evaluate your improvements. Supported metrics include FID, SSIM, LPIPS, CLIP Score, MSE, PSNR, DISTS, and DINOv2 distance.
