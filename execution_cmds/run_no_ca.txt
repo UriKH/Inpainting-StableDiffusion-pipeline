@@ -1,0 +1,45 @@
+echo ">>>>>>>>>>>>>>>>>>>> v10 no ca >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 10 --reconstruction --ignore_cross_attention ./data/coco/validation/ ./results_final/validation/v10_no_ca/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v10_no_ca/
+
+echo ">>>>>>>>>>>>>>>>>>>> v10 no ca (10,2) >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 10 --reconstruction --rp_jump_length 10 --rp_jump_n_sample 2 --ignore_cross_attention ./data/coco/validation/ ./results_final/validation/v10_no_ca_10_2/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v10_no_ca_10_2/
+
+echo ">>>>>>>>>>>>>>>>>>>> v11 no ca >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 11 --reconstruction --use_freeu --ignore_cross_attention ./data/coco/validation/ ./results_final/validation/v11_no_ca/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v11_no_ca/
+
+echo ">>>>>>>>>>>>>>>>>>>> v12 no ca >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 12 --reconstruction --use_freeu --ignore_cross_attention ./data/coco/validation/ ./results_final/validation/v12_no_ca/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v12_no_ca/
+
+echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,5) no ca >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 13 --reconstruction --ignore_cross_attention ./data/coco/validation/ ./results_final/validation/v13_3_5_5_no_ca/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13_3_5_5_no_ca/
+
+echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,4.5) no ca >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 13 --reconstruction --sm_sigma 4.5 --ignore_cross_attention ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5_no_ca/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5_no_ca/
+
+echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,4.5) freeu no ca >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 13 --reconstruction --sm_sigma 4.5 --use_freeu --ignore_cross_attention ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5_freeu_no_ca/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5_freeu_no_ca/
+
+
+
+
+
+
+
+echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,5) >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 13 --reconstruction ./data/coco/validation/ ./results_final/validation/v13_3_5_5/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13_3_5_5/
+
+echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,4.5) >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 13 --reconstruction --sm_sigma 4.5 ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5/
+
+echo ">>>>>>>>>>>>>>>>>>>> v13 (3,5,4.5) freeu >>>>>>>>>>>>>>>>>>>>"
+python ./data_generator.py --version 13 --reconstruction --sm_sigma 4.5 --use_freeu ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5_freeu/
+python ./create_metrics_json.py ./data/coco/validation/ ./results_final/validation/v13_3_5_4-5_freeu/
