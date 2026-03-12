@@ -19,7 +19,7 @@ class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):
                 processor.dilation_threshold = self.sa_dilation_threshold
                 processor.resize_mode = self.sa_resize_mode
                 processor_dict[name] = processor
-            elif "attn2" in name:  # Cross-Attention Layers
+            elif "attn2" in name and not self.ignore_cross_attention:  # Cross-Attention Layers
                 processor = MaskedCrossAttnProcessor(latent_h, latent_w)
                 processor.mask_tensor = cross_mask
                 processor.resize_mode = self.ca_resize_mode

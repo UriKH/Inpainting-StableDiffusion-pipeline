@@ -66,6 +66,7 @@ if __name__ == "__main__":
     parser.add_argument("--sa_dilation_threshold", default=0.0, type=float, help="binary interpolation threshold for self attention")
     parser.add_argument("--sa_resize_mode", default='nearest', type=str, help="interpolation mode for self attention")
     parser.add_argument("--ca_resize_mode", default='nearest', type=str, help="interpolation mode for cross attention")
+    parser.add_argument("--ignore_cross_attention", action='store_true', help="ignore cross attention upgrades")
 
     # Preprocessing mask dilation and feathering
     parser.add_argument("--pp_feather_radius", default=5, type=int, help="feathering kernel size for preprocessing")
