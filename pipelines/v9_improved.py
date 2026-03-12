@@ -1,6 +1,7 @@
 from pipelines.cross_attention import MaskedCrossAttnProcessor
 from pipelines.self_attention import MaskedSelfAttnProcessor
 from pipelines.v8_improved import ImprovedInpaintPipelineV8
+from diffusers.models.attention_processor import AttnProcessor2_0
 import torch
 
 
