@@ -12,8 +12,9 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     CFG_SCALE_FACTOR = 7.5
 
-    def __init__(self, model_id=MODEL_ID, device=DEVICE, **kwargs):
+    def __init__(self, model_id=MODEL_ID, device=DEVICE, reconstruction_noise=0.2, **kwargs):
         super().__init__(model_id, device, **kwargs)
+        self.reconstruction_noise = reconstruction_noise
 
     def encode_prompt(self, prompt: str, text_encoder, tokenizer):
         """
@@ -89,7 +90,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
 
         timesteps = self.scheduler.timesteps
         if self.reconstruction:
-            latent_noise_scale = 0.2
+            latent_noise_scale = self.reconstruction_noise
             textured_latents = init_latents + (torch.randn_like(init_latents) * latent_noise_scale * mask_tensor)
             init_step = min(int(num_inference_steps * (1 - self.init_noise_strength)), num_inference_steps - 1)
             timesteps = self.scheduler.timesteps[init_step:]

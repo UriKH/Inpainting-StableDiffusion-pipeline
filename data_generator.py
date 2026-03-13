@@ -78,6 +78,8 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="which pipeline version to import")
 
+    parser.add_argument("--reconstruction_noise", default=0.2, type=int, help="Amount of noise to add to the reconstruction")
+
     # Self-Attention dilation thresholds and Cross-Attention interpolation modes
     parser.add_argument("--sa_dilation_threshold", default=0.0, type=float,
                         help="binary interpolation threshold for self attention")
