@@ -6,6 +6,11 @@ from utils.torch_utils import generate_perlin_noise_2d
 
 class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
     def __init__(self, om_noise_res=16, om_dilation_kernel=5, om_thresh='linear', **kwargs):
+        """
+        :param om_noise_res: The resolution of the noise map for organic masking.
+        :param om_dilation_kernel: The size of the kernel for dilation for organic masking.
+        :param om_thresh: The threshold type for organic masking.
+        """
         super().__init__(**kwargs)
         self.om_noise_res = om_noise_res
         self.om_dilation_kernel = om_dilation_kernel
@@ -14,37 +19,30 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
     def compute_organic_mask(self, base_mask, t, max_t):
         """
         Generates a time-dependent, organic 'coastline' mask for latent blending.
+        :param base_mask: The base mask tensor.
+        :param t: The current timestep.
+        :param max_t: The maximum number of timesteps.
         """
-        rho = 1.0 - (t.item() / max_t)
-
         if t.item() == 0:
             return base_mask
 
-        # 3. Dilation: Expand the original mask to give the model room to breathe
+        rho = 1.0 - (t.item() / max_t)
         pad = self.om_dilation_kernel // 2
         dilated_mask = F.max_pool2d(base_mask, kernel_size=self.om_dilation_kernel, stride=1, padding=pad)
-
         smooth_noise = generate_perlin_noise_2d(
             shape=base_mask.shape,
             res=(self.om_noise_res, self.om_noise_res),
             device=base_mask.device
         )
 
-        # 5. Combine and Apply Dynamic Threshold
         noisy_mask = dilated_mask * smooth_noise
-
-        # As time progresses (rho -> 1), the threshold gets higher,
-        # forcing the organic boundaries to shrink back toward the center.
         if self.om_thresh == 'linear':
             current_threshold = 0.2 + (rho * 0.6)
         elif self.om_thresh == 'cubic':
             current_threshold = 0.2 + ((rho ** 2) * 0.6)
         else:
             raise ValueError(f'bad threshold type {self.om_thresh}. Use: linear/cubic')
-        # Binarize back to strict 0s and 1s to create the rocky coastline
         dynamic_mask = (noisy_mask > current_threshold).float()
-
-        # 6. Safety Net: The mask must NEVER shrink smaller than the original missing hole
         return torch.max(dynamic_mask, base_mask)
 
     @torch.no_grad()
@@ -73,12 +71,13 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
                     max_t=max_t
                 )
 
-                dynamic_soft_mask = self._create_soft_mask(organic_mask)
-                for name, proc in self.unet.attn_processors.items():
-                    if 'attn1' in name:
-                        proc.mask_tensor = organic_mask
-                    elif 'attn2' in name:
-                        proc.mask_tensor = dynamic_soft_mask
+                # TODO: this was removed beacuse it didn't make too much sense...
+                # dynamic_soft_mask = self._create_soft_mask(organic_mask)
+                # for name, proc in self.unet.attn_processors.items():
+                #     if 'attn1' in name:
+                #         proc.mask_tensor = organic_mask
+                #     elif 'attn2' in name:
+                #         proc.mask_tensor = dynamic_soft_mask
 
                 # Predict noise
                 with torch.no_grad():

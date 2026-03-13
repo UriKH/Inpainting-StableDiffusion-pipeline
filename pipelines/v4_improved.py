@@ -10,43 +10,35 @@ class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def image_preprocessing(self, real_image, mask_image):
+    def image_preprocessing(self, real_image: Image.Image, mask_image: Image.Image) -> Image.Image:
+        """
+        Fills the blacked-out regions of the image using the average of the surrounding pixels (computed iteratively).
+        :param real_image: The image to be inpainted.
+        :param mask_image: The mask image to guide the inpainting process.
+        :return: The filled image.
+        (This idea was inspired by a conversation with AI)
+        """
         real_arr = np.array(real_image).astype(np.float32)
         mask_arr = np.array(mask_image)
-        
-        # True inside the hole, False in the known background
         mask_bool = mask_arr == 255
+
         if not np.any(mask_bool):
             return real_image
-        
-        # 1. Initialize the hole with the mean background color to speed up math
-        mean_bg_color = np.mean(real_arr[~mask_bool], axis=0)
+
         filled_arr = real_arr.copy()
-        filled_arr[mask_bool] = mean_bg_color
-        
-        # 2. The Jacobi Stencil (Average of North, South, East, West)
-        # Center is 0, edges are 0.25
+        filled_arr[mask_bool] = np.mean(real_arr[~mask_bool], axis=0)
         kernel = np.array([[0.0,  0.25, 0.0],
                            [0.25, 0.0,  0.25],
                            [0.0,  0.25, 0.0]], dtype=np.float32)
         
-        # 3. Iterate the PDE solver
-        max_iters = 1000     # A huge safety net
+        max_iters = 1000
         tolerance = 0.05
-
         for i in range(max_iters):
             smoothed = cv.filter2D(filled_arr, -1, kernel, borderType=cv.BORDER_REPLICATE)
-            
-            # Calculate the mathematical difference between this step and the last step
-            # We only care about the change INSIDE the hole
             max_shift = np.max(np.abs(smoothed[mask_bool] - filled_arr[mask_bool]))
             filled_arr[mask_bool] = smoothed[mask_bool]
-            
-            # The convergence check
             if max_shift < tolerance:
                 break
                 
         filled_arr = np.clip(filled_arr, 0, 255).astype(np.uint8)
-        #img = Image.fromarray(filled_arr)
-        #img.save('try_laplace2.png')
         return Image.fromarray(filled_arr)

@@ -9,13 +9,26 @@ import numpy as np
 class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
     def __init__(self, pp_dilate_kernel_size=3, pp_feather_radius=5, use_negative_prompt=True,
                  ignore_improvement_v5 = False, *args, **kwargs):
+        """
+        :param pp_dilate_kernel_size: The size of the kernel for mask dilation preprocessing.
+        :param pp_feather_radius: The radius of the Gaussian blur for mask feathering preprocessing.
+        :param use_negative_prompt: Whether to use a negative prompt.
+        :param ignore_improvement_v5: Whether to ignore the improvements in V5.
+        """
         super().__init__(*args, **kwargs)
         self.pp_dilate_kernel_size = pp_dilate_kernel_size
         self.pp_feather_radius = pp_feather_radius
         self.use_negative_prompt = use_negative_prompt
         self.ignore_improvement_v5 = ignore_improvement_v5
 
-    def encode_prompt(self, prompt, text_encoder, tokenizer):
+    def encode_prompt(self, prompt: str, text_encoder, tokenizer):
+        """
+        Encodes the prompt into text embeddings.
+        :param prompt: The prompt to encode.
+        :param text_encoder: The text encoder model.
+        :param tokenizer: The tokenizer model.
+        :return: The encoded prompt [uncond, text].
+        """
         text_input = tokenizer(
             prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt"
         )
@@ -31,9 +44,11 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
         text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
         return text_embeddings
     
-    def mask_preprocessing(self, mask_image: Image.Image):
+    def mask_preprocessing(self, mask_image: Image.Image) -> Image.Image:
         """
         Enhances the mask using Dilation and Feathering to prevent 'cut' edges.
+        :param mask_image: The mask image to enhance.
+        :return: The enhanced mask image.
         """
         if self.ignore_improvement_v5:
             return super().mask_preprocessing(mask_image)
@@ -47,7 +62,12 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
             mask_pil = Image.fromarray(mask_dilated)
         return mask_pil
 
-    def preprocess(self, pipe_in: InpaintPipelineInput):
+    def preprocess(self, pipe_in: InpaintPipelineInput) -> InpaintPipelineInput:
+        """
+        Preprocesses the input data by applying mask enhancement and image enhancement.
+        :param pipe_in: The input data.
+        :return: The preprocessed input data.
+        """
         if self.ignore_improvement_v5:
             return super().preprocess(pipe_in)
 
