@@ -58,7 +58,7 @@ def create_heatmap(df):
             # Invert lower-is-better metrics so that the lowest value gets 1.0 (dark blue)
             norm_df[metric] = (max_val - pivot_df[metric]) / (max_val - min_val)
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 10))
     sns.set_theme(style="white")
     
     # Create the heatmap. We use norm_df for the colors, but pivot_df for the text annotations!
