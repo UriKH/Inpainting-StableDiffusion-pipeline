@@ -3,6 +3,8 @@ import argparse
 import traceback
 import os
 import sys
+import json
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from coco_runner import COCODatasetGenerator
@@ -56,6 +58,10 @@ def main(args):
         target_class = getattr(module, class_name)
         params = vars(args)
         params.pop('version')
+
+        os.makedirs(output_paths, exist_ok=True)
+        with open(os.path.join(output_paths, 'pipeline_hyper_parameters.json'), 'w') as f:
+            json.dump(params, f, indent=4)
         instance = target_class(**params)
     except AttributeError:
         print(f"Error: Class '{class_name}' not found in '{module_name}'.")
