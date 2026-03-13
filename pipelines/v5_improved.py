@@ -62,32 +62,6 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
             mask_pil = Image.fromarray(mask_dilated)
         return mask_pil
 
-    def image_preprocessing(self, real_image: Image.Image, mask_image: Image.Image) -> Image.Image:
-        """
-        Overrides V3 to inject high-frequency Gaussian noise into the blurred masked region.
-        """
-        # 1. Get the baseline blurred image from V3
-        blurred_img = super().image_preprocessing(real_image, mask_image)
-
-        if self.ignore_improvement_v5:
-            return blurred_img
-
-        # 2. Convert to NumPy for array math
-        img_arr = np.array(blurred_img).astype(np.float32)
-        mask_arr = np.array(mask_image)
-        mask_bool = mask_arr == 255
-
-        # 3. Generate high-frequency Gaussian noise
-        # Note: You can tweak the 'scale' (standard deviation) to control the noise intensity.
-        # A scale between 20.0 and 50.0 is usually a good starting point.
-        noise_scale = 30.0
-        noise = np.random.normal(loc=0.0, scale=noise_scale, size=img_arr.shape)
-
-        # 4. Inject the noise strictly into the masked region and clip to valid RGB ranges
-        img_arr[mask_bool] = np.clip(img_arr[mask_bool] + noise[mask_bool], 0, 255)
-
-        return Image.fromarray(img_arr.astype(np.uint8))
-
     def preprocess(self, pipe_in: InpaintPipelineInput) -> InpaintPipelineInput:
         """
         Preprocesses the input data by applying mask enhancement and image enhancement.
