@@ -32,6 +32,6 @@
     "use_freeu": false,
     "init_noise_strength": 1.0,
     "reconstruction": true,
-    "input_path": "./data/coco/temp_val/",
+    "input_path": "./data/coco/validation/",
     "output_path": "./results_final/v5_3experiment_try_fix/v5_no_feather/"
 }
