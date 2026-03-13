@@ -1,20 +1,23 @@
 from pipelines.v11_improved import ImprovedInpaintPipelineV11
 import torch
 import torch.nn.functional as F
+import torchvision.transforms.functional as TF
 from utils.torch_utils import generate_perlin_noise_2d
 
 
 class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
-    def __init__(self, om_noise_res=16, om_dilation_kernel=5, om_thresh='linear', **kwargs):
+    def __init__(self, om_noise_res=16, om_dilation_kernel=5, om_thresh='linear', om_blur_kernel=1, **kwargs):
         """
         :param om_noise_res: The resolution of the noise map for organic masking.
         :param om_dilation_kernel: The size of the kernel for dilation for organic masking.
         :param om_thresh: The threshold type for organic masking.
+        :param om_blur_kernel: The size of the kernel for Gaussian blur for organic masking.
         """
         super().__init__(**kwargs)
         self.om_noise_res = om_noise_res
         self.om_dilation_kernel = om_dilation_kernel
         self.om_thresh = om_thresh
+        self.om_blur_kernel = om_blur_kernel
 
     def compute_organic_mask(self, base_mask, t, max_t):
         """
@@ -42,8 +45,15 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
             current_threshold = 0.2 + ((rho ** 2) * 0.6)
         else:
             raise ValueError(f'bad threshold type {self.om_thresh}. Use: linear/cubic')
+
         dynamic_mask = (noisy_mask > current_threshold).float()
-        return torch.max(dynamic_mask, base_mask)
+        extended = torch.max(dynamic_mask, base_mask)
+        if self.om_blur_kernel != 1:
+            extended = TF.gaussian_blur(
+                extended,
+                kernel_size=[self.om_blur_kernel, self.om_blur_kernel]
+            )
+        return extended
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
