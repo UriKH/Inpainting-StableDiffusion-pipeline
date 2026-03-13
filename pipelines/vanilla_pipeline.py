@@ -90,7 +90,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         timesteps = self.scheduler.timesteps
         if self.reconstruction:
             latent_noise_scale = 0.2
-            textured_latents = init_latents + (noise * latent_noise_scale * mask_tensor)
+            textured_latents = init_latents + (torch.randn_like(init_latents) * latent_noise_scale * mask_tensor)
             init_step = min(int(num_inference_steps * (1 - self.init_noise_strength)), num_inference_steps - 1)
             timesteps = self.scheduler.timesteps[init_step:]
             latents = self.scheduler.add_noise(textured_latents, noise, timesteps[0])
