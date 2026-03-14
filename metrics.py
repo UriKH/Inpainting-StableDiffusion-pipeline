@@ -136,10 +136,15 @@ class COCOInpaintingMetricsScorer:
         ).to(self.device)
 
         with torch.no_grad():
-            image_embs = self.pick_model.get_image_features(pick_inputs.pixel_values)
-            image_embs = image_embs / torch.norm(image_embs, dim=-1, keepdim=True)
+            # Pass everything through the model at once using ** unpacking
+            pick_outputs = self.pick_model(**pick_inputs)
 
-            text_embs = self.pick_model.get_text_features(pick_inputs.input_ids, pick_inputs.attention_mask)
+            # Extract the raw tensors from the HuggingFace output object
+            image_embs = pick_outputs.image_embeds
+            text_embs = pick_outputs.text_embeds
+
+            # Now we can safely normalize the tensors
+            image_embs = image_embs / torch.norm(image_embs, dim=-1, keepdim=True)
             text_embs = text_embs / torch.norm(text_embs, dim=-1, keepdim=True)
 
             # PickScore is the scaled dot product
