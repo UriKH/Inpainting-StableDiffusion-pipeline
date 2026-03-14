@@ -113,7 +113,7 @@ def create_radar_chart(df, selected_folders=None):
 
         # Format the label to include the raw bounds
         # Using .3g for clean formatting of both large numbers and small decimals
-        label = f"{metric}\n(Worst: {worst_val:.3g} $\rightarrow$ Best: {best_val:.3g})"
+        label = f"{metric}\n(Worst: {worst_val:.3g} - Best: {best_val:.3g})"
         axis_labels.append(label)
 
     # Compute angle of each axis
