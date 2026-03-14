@@ -194,10 +194,10 @@ class COCOInpaintingMetricsScorer:
         self.mse.reset()
         self.psnr.reset()
         raws = {
-            self.CLIP_SCORE: self.clip_scores,
-            self.PICK_SCORE: self.pick_scores,
-            self.DISTS: self.dists_scores,
-            self.DINO_VITS: self.dinov2_scores
+            self.CLIP_SCORE: [float(score) for score in self.clip_scores],
+            self.PICK_SCORE: [float(score) for score in self.pick_scores],
+            self.DISTS: [float(score) for score in self.dists_scores],
+            self.DINO_VITS: [float(score) for score in self.dinov2_scores],
         }
         return results, raws
 
