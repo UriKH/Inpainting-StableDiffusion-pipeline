@@ -5,27 +5,36 @@ import os
 import sys
 import json
 
+from our_runner import OurDatasetGenerator
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from coco_runner import COCODatasetGenerator
 from utils.getters import input_output_paths_args
-from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
+from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH, OUR_DATASET_PATH, OUR_DATASET_CAPTIONS_PATH
 from utils.torch_utils import clear_cache
 from pipelines.pipeline import InpaintingPipeLineScheme
 
 
-def generate(input_paths: str, output_paths: str, pipeline: InpaintingPipeLineScheme):
+def generate(input_paths: str, output_paths: str, pipeline: InpaintingPipeLineScheme, generate_ours=False):
     """
     Generate images from COCO dataset using a specific pipeline.
     :param input_paths: Path to the input directory containing images.
     :param output_paths: Path to the output directory where generated images will be saved.
     :param pipeline: The pipeline to use for generating images.
+    :param generate_ours: Whether to generate images from our dataset instead of COCO.
     """
     clear_cache()
-    generator = COCODatasetGenerator(
-        COCO_INSTANCES_PATH,
-        COCO_CAPTIONS_PATH,
-    )
+    if generate_ours:
+        generator = OurDatasetGenerator(
+            OUR_DATASET_PATH,
+            OUR_DATASET_CAPTIONS_PATH
+        )
+    else:
+        generator = COCODatasetGenerator(
+            COCO_INSTANCES_PATH,
+            COCO_CAPTIONS_PATH,
+        )
     generator.generate(input_paths, output_paths, pipeline)
 
 
@@ -69,7 +78,7 @@ def main(args):
 
     # generate images
     try:
-        generate(input_paths, output_paths, instance)
+        generate(input_paths, output_paths, instance, args.generate_ours)
     except Exception as e:
         print(f"Error while running generator: {e}")
         traceback.print_exc()
@@ -143,6 +152,7 @@ if __name__ == "__main__":
                         help="insert the version number (0 for vanilla)")
     parser.add_argument("--init_noise_strength", default=1.0, type=float, help="init noise strength")
     parser.add_argument("--reconstruction", action='store_true', help="reconstruction or replace")
+    parser.add_argument("--generate_ours", action='store_true', help="generate images manually")
 
     input_paths, output_paths = input_output_paths_args(parser)
     args = parser.parse_args()
