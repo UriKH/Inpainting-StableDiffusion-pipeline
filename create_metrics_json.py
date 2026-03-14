@@ -18,14 +18,18 @@ def compute_metrics(input_paths: str, output_paths: str):
     for filename in tqdm(filenames, desc="Calculating metrics..."):
         scorer.update_metrics(str(os.path.join(input_paths, filename)), str(os.path.join(output_paths, filename)))
 
-    scores = scorer.compute_metrics()
+    scores, raws = scorer.compute_metrics()
     pprint(scores)
 
     metrics_path = os.path.join(output_paths, "metrics.json")
     with open(metrics_path, "w") as f:
         json.dump(scores, f)
-    print(f'Computed metrics dumped to: {metrics_path}')
+    raws_path = metrics_path.replace(".json", "_raws.json")
+    with open(raws_path, "w") as f:
+        json.dump(raws, f)
 
+    print(f'Computed metrics dumped to: {metrics_path}')
+    print(f'Raw scores dumped to: {raws_path}')
 
 if __name__ == "__main__":
     input_paths, output_paths = input_output_paths_args()

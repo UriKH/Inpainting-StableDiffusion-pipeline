@@ -85,7 +85,12 @@ class COCOInpaintingMetricsScorer:
         print('Loading DINOv2 model...')
         self.dinov2 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14').to(self.device)
         self.dinov2.eval()
+
         self.dinov2_scores = []
+        self.ssim_scores = []
+        self.lpips_scores = []
+        self.mse_scores = []
+        self.psnr_scores = []
 
         self.ratio_buckets = {f'{i}-{i+5}': 0 for i in range(0, 91, 5)}
         self.bucket_keys_map = {i: f'{i}-{i+5}' for i in range(0, 91, 5)}
@@ -160,10 +165,16 @@ class COCOInpaintingMetricsScorer:
         """
         real_tensor = self.preprocess_image(real_image)
         gen_tensor = self.preprocess_image(generated_image)
-        self.ssim.update(gen_tensor, real_tensor)
-        self.lpips.update(gen_tensor, real_tensor)
-        self.mse.update(gen_tensor, real_tensor)
-        self.psnr.update(gen_tensor, real_tensor)
+
+        self.ssim_scores.append(float(self.ssim(gen_tensor, real_tensor)))
+        self.lpips_scores.append(float(self.lpips(gen_tensor, real_tensor)))
+        self.mse_scores.append(float(self.mse(gen_tensor, real_tensor)))
+        self.psnr_scores.append(float(self.psnr(gen_tensor, real_tensor)))
+
+        # self.ssim.update(gen_tensor, real_tensor)
+        # self.lpips.update(gen_tensor, real_tensor)
+        # self.mse.update(gen_tensor, real_tensor)
+        # self.psnr.update(gen_tensor, real_tensor)
 
     def compute_metrics(self) -> dict:
         """
@@ -193,7 +204,25 @@ class COCOInpaintingMetricsScorer:
         self.lpips.reset()
         self.mse.reset()
         self.psnr.reset()
-        return results
+        raws = {
+            self.CLIP_SCORE: [float(score) for score in self.clip_scores],
+            self.PICK_SCORE: [float(score) for score in self.pick_scores],
+            self.DISTS: [float(score) for score in self.dists_scores],
+            self.DINO_VITS: [float(score) for score in self.dinov2_scores],
+            self.SSIM: self.ssim_scores,
+            self.MSE: self.mse_scores,
+            self.PSNR: self.psnr_scores,
+            self.LPIPS: self.lpips_scores,
+        }
+        self.ssim_scores = []
+        self.clip_scores = []
+        self.pick_scores = []
+        self.dists_scores = []
+        self.dinov2_scores = []
+        self.lpips_scores = []
+        self.mse_scores = []
+        self.psnr_scores = []
+        return results, raws
 
     def update_metrics(self, real_image_path: str, generated_image_path: str):
         """
