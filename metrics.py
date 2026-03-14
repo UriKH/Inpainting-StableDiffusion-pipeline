@@ -193,7 +193,13 @@ class COCOInpaintingMetricsScorer:
         self.lpips.reset()
         self.mse.reset()
         self.psnr.reset()
-        return results
+        raws = {
+            self.CLIP_SCORE: self.clip_scores,
+            self.PICK_SCORE: self.pick_scores,
+            self.DISTS: self.dists_scores,
+            self.DINO_VITS: self.dinov2_scores
+        }
+        return results, raws
 
     def update_metrics(self, real_image_path: str, generated_image_path: str):
         """
