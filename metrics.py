@@ -223,8 +223,6 @@
 #         pad_w = (patch_size - w % patch_size) % patch_size
 #         img_padded = F.pad(img_normalized, (0, pad_w, 0, pad_h), mode='constant', value=0)
 #         return img_padded
-
-
 import torch
 import torch.nn.functional as F
 from torchmetrics.image.fid import FrechetInceptionDistance
@@ -233,7 +231,7 @@ from torchmetrics.multimodal.clip_score import CLIPScore
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from torchvision.transforms import ToTensor
-from torchmetrics import MeanSquaredError
+from torchmetrics import MeanSquaredError, MeanAbsoluteError
 from torchmetrics.image import PeakSignalNoiseRatio
 from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
@@ -264,6 +262,7 @@ class COCOInpaintingMetricsScorer:
     LPIPS = 'LPIPS'
     CLIP_SCORE = 'CLIP score'
     MSE = 'MSE'
+    MAE = 'MAE'
     PSNR = 'PSNR'
     DISTS = 'DISTS'
     DINO_VITS = 'DINOv2'
@@ -272,13 +271,13 @@ class COCOInpaintingMetricsScorer:
     DENSITY = 'Density'
     COVERAGE = 'Coverage'
 
-    METRICS = [FID, KID, SSIM, LPIPS, CLIP_SCORE, MSE, PSNR, DISTS, DINO_VITS, PRECISION, RECALL, DENSITY, COVERAGE]
+    METRICS = [FID, KID, SSIM, LPIPS, CLIP_SCORE, MSE, MAE, PSNR, DISTS, DINO_VITS, PRECISION, RECALL, DENSITY,
+               COVERAGE]
 
-    # Updated boolean map to handle the new metrics
     METRIC_BEST_HIGHEST = {
         FID: False, KID: False, SSIM: True, LPIPS: False, CLIP_SCORE: True, MSE: False,
-        PSNR: True, DISTS: False, DINO_VITS: True, PRECISION: True, RECALL: True,
-        DENSITY: True, COVERAGE: True
+        MAE: False, PSNR: True, DISTS: False, DINO_VITS: True, PRECISION: True,
+        RECALL: True, DENSITY: True, COVERAGE: True
     }
 
     def __init__(self, device="cuda"):
@@ -289,8 +288,6 @@ class COCOInpaintingMetricsScorer:
         self.fid = FrechetInceptionDistance(feature=2048, normalize=True).to(self.device)
 
         print('Loading KID model...')
-        # Note: subset_size is set to 50 to prevent crashes on smaller datasets.
-        # Standard literature often uses 1000 if your evaluation set is very large.
         self.kid = KernelInceptionDistance(feature=2048, subset_size=50, normalize=True).to(self.device)
 
         # Text-Alignment Metric
@@ -308,8 +305,9 @@ class COCOInpaintingMetricsScorer:
         self.lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg', normalize=True).to(self.device)
         self.coco_manager = COCODatasetGenerator(COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH)
 
-        print('Loading MSE and PSNR models...')
+        print('Loading MSE, MAE, and PSNR models...')
         self.mse = MeanSquaredError().to(self.device)
+        self.mae = MeanAbsoluteError().to(self.device)
         self.psnr = PeakSignalNoiseRatio(data_range=1.0).to(self.device)
 
         print('Loading DISTS model...')
@@ -331,20 +329,13 @@ class COCOInpaintingMetricsScorer:
         self.mask_generator = MaskGenerator(**MASKING_CONFIGS)
 
     def preprocess_image(self, pil_image: Image.Image) -> torch.Tensor:
-        """
-        Converts PIL Image to the format expected by torchmetrics - a float tensor.
-        """
         tensor = ToTensor()(pil_image)
         return tensor.unsqueeze(0).to(self.device)
 
     def update_fid_clip_dists_dino(self, real_image: Image.Image, generated_image: Image.Image, prompt: str):
-        """
-        Updates the FID, KID, CLIP Score, DISTS, DINOv2, and PRDC states.
-        """
         real_tensor = self.preprocess_image(real_image)
         gen_tensor = self.preprocess_image(generated_image)
 
-        # Distribution Updates
         self.fid.update(real_tensor, real=True)
         self.fid.update(gen_tensor, real=False)
         self.kid.update(real_tensor, real=True)
@@ -352,13 +343,11 @@ class COCOInpaintingMetricsScorer:
 
         self.dists_scores.append(self.dists(real_tensor, gen_tensor))
 
-        # Extract DINOv2 similarity and raw features for PRDC
         dino_sim, real_feat, gen_feat = self._get_dino_features_and_sim(real_tensor, gen_tensor)
         self.dinov2_scores.append(dino_sim.item())
         self.prdc_real_features.append(real_feat)
         self.prdc_gen_features.append(gen_feat)
 
-        # Compute CLIP Score manually
         inputs = self.clip_processor(text=[prompt], images=generated_image, return_tensors="pt", padding=True)
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
@@ -371,20 +360,15 @@ class COCOInpaintingMetricsScorer:
             self.clip_scores.append(score.item())
 
     def update_reconstruction(self, real_image: Image.Image, generated_image: Image.Image):
-        """
-        Updates the SSIM, LPIPS, MSE, and PSNR states.
-        """
         real_tensor = self.preprocess_image(real_image)
         gen_tensor = self.preprocess_image(generated_image)
         self.ssim.update(gen_tensor, real_tensor)
         self.lpips.update(gen_tensor, real_tensor)
         self.mse.update(gen_tensor, real_tensor)
+        self.mae.update(gen_tensor, real_tensor)
         self.psnr.update(gen_tensor, real_tensor)
 
     def compute_metrics(self) -> dict:
-        """
-        Calculates and returns the final scores across all updated images.
-        """
         print("Computing final metrics... this might take a moment.")
 
         mean_clip = sum(self.clip_scores) / len(self.clip_scores) if self.clip_scores else 0.0
@@ -397,19 +381,18 @@ class COCOInpaintingMetricsScorer:
             self.SSIM: float(self.ssim.compute()),
             self.LPIPS: float(self.lpips.compute()),
             self.MSE: float(self.mse.compute()),
+            self.MAE: float(self.mae.compute()),
             self.PSNR: float(self.psnr.compute()),
             self.DISTS: float(sum(self.dists_scores) / len(self.dists_scores)) if self.dists_scores else 0.0,
             self.DINO_VITS: float(sum(self.dinov2_scores) / len(self.dinov2_scores)) if self.dinov2_scores else 0.0,
             'ratio buckets': self.ratio_buckets
         }
 
-        # Compute PRDC metrics using accumulated DINOv2 features
         try:
             from prdc import compute_prdc
             real_feats_array = np.stack(self.prdc_real_features)
             gen_feats_array = np.stack(self.prdc_gen_features)
 
-            # nearest_k=5 is the standard configuration
             prdc_dict = compute_prdc(real_features=real_feats_array, fake_features=gen_feats_array, nearest_k=5)
 
             results[self.PRECISION] = float(prdc_dict['precision'])
@@ -423,12 +406,13 @@ class COCOInpaintingMetricsScorer:
             print(f"WARNING: PRDC computation failed (ensure you have >5 images for k=5): {e}")
             results[self.PRECISION] = results[self.RECALL] = results[self.DENSITY] = results[self.COVERAGE] = 0.0
 
-        # Reset states for the next run
+        # Reset states
         self.fid.reset()
         self.kid.reset()
         self.ssim.reset()
         self.lpips.reset()
         self.mse.reset()
+        self.mae.reset()
         self.psnr.reset()
         self.clip_scores = []
         self.dists_scores = []
@@ -439,9 +423,6 @@ class COCOInpaintingMetricsScorer:
         return results
 
     def update_metrics(self, real_image_path: str, generated_image_path: str):
-        """
-        Updates the metrics with the given real and generated images.
-        """
         try:
             prompt, img_id = self.coco_manager.get_prompt_img_id(real_image_path)
         except Exception as e:
@@ -464,10 +445,6 @@ class COCOInpaintingMetricsScorer:
         self.update_reconstruction(real_image, generated_image)
 
     def _get_dino_features_and_sim(self, img1, img2):
-        """
-        Compute DINOv2 similarity between two images and extract raw features.
-        Returns: (similarity_mean, real_features, gen_features)
-        """
         with torch.no_grad():
             feat1 = self.dinov2(self._prepare_for_dino(img1))
             feat2 = self.dinov2(self._prepare_for_dino(img2))
@@ -476,9 +453,6 @@ class COCOInpaintingMetricsScorer:
 
     @staticmethod
     def _prepare_for_dino(img_tensor, patch_size: int = 14):
-        """
-        Standardizes image size for DINOv2 without distortion using the 'training' normalization parameters.
-        """
         if img_tensor.dim() == 3:
             img_tensor = img_tensor.unsqueeze(0)
 
