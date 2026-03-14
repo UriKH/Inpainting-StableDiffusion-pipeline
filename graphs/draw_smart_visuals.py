@@ -72,65 +72,79 @@ def create_heatmap(df):
         linecolor='lightgray'
     )
     
-    plt.title("Pipeline Comparison Heatmap (Darker = Better)", fontsize=14, fontweight='bold', pad=15)
-    plt.xlabel("Metrics", fontsize=12)
-    plt.ylabel("Pipeline Version", fontsize=12)
+    # plt.title("Pipeline Comparison Heatmap (Darker = Better)", fontsize=14, fontweight='bold', pad=15)
+    # plt.xlabel("Metrics", fontsize=12)
+    # plt.ylabel("Pipeline Version", fontsize=12)
     plt.xticks(rotation=45, ha="right")
     plt.tight_layout()
     plt.savefig("metrics_heatmap.png", dpi=300)
     print("Saved metrics_heatmap.png")
 
+
 def create_radar_chart(df, selected_folders=None):
     """Creates a radar chart for comparing specific pipelines."""
-    # If no specific folders are provided, use all of them (can get messy if > 4)
+    # If no specific folders are provided, use all of them
     if selected_folders:
         df = df[df['Folder'].isin(selected_folders)]
-        
+
     pivot_df = df.pivot(index='Folder', columns='Metric', values='Score')
     metrics = list(pivot_df.columns)
     num_vars = len(metrics)
-    
-    # Normalize data so the outer edge of the radar is ALWAYS the best score
+
     norm_df = pivot_df.copy()
+    axis_labels = []  # List to hold our new, detailed axis titles
+
+    # Normalize data and generate detailed labels simultaneously
     for metric in metrics:
+        # Check directionality from your metrics.py file
         higher_is_better = COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST.get(metric, True)
         min_val = pivot_df[metric].min()
         max_val = pivot_df[metric].max()
-        
+
         if max_val == min_val:
-            norm_df[metric] = 1.0 
+            norm_df[metric] = 1.0
+            worst_val, best_val = min_val, max_val
         elif higher_is_better:
             norm_df[metric] = (pivot_df[metric] - min_val) / (max_val - min_val)
+            worst_val, best_val = min_val, max_val  # Higher is best
         else:
             norm_df[metric] = (max_val - pivot_df[metric]) / (max_val - min_val)
+            worst_val, best_val = max_val, min_val  # Lower is best
+
+        # Format the label to include the raw bounds
+        # Using .3g for clean formatting of both large numbers and small decimals
+        label = f"{metric}\n(Worst: {worst_val:.3g} $\rightarrow$ Best: {best_val:.3g})"
+        axis_labels.append(label)
 
     # Compute angle of each axis
     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
-    angles += angles[:1] # Close the loop
+    angles += angles[:1]  # Close the loop
 
-    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
-    
-    # Draw one axe per variable and add labels
-    plt.xticks(angles[:-1], metrics, size=11)
-    
+    # Slightly larger figure to accommodate multi-line text
+    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
+
+    # Draw one axe per variable and add the NEW labels
+    plt.xticks(angles[:-1], axis_labels, size=11, fontweight='medium')
+
     # Remove radial labels (0.2, 0.4, etc.) to keep it clean
     ax.set_yticklabels([])
-    
+
     # Color palette
     colors = sns.color_palette("husl", len(norm_df.index))
 
     # Plot each pipeline
     for idx, (folder_name, row) in enumerate(norm_df.iterrows()):
         values = row.values.flatten().tolist()
-        values += values[:1] # Close the loop
-        
+        values += values[:1]  # Close the loop
+
         ax.plot(angles, values, linewidth=2, linestyle='solid', label=folder_name, color=colors[idx])
         ax.fill(angles, values, color=colors[idx], alpha=0.2)
 
-    plt.title("Radar Chart: Normalized Metric Performance\n(Further Out = Better)", size=14, fontweight='bold', pad=20)
-    plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
-    plt.tight_layout()
-    plt.savefig("experiment_radar_chart.png", dpi=300)
+    plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), fontsize=12)
+
+    # Increased pad and added bbox_inches to ensure text isn't cut off
+    plt.tight_layout(pad=4.0)
+    plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
     print("Saved experiment_radar_chart.png")
 
 if __name__ == '__main__':
