@@ -147,9 +147,80 @@ def create_heatmap(df):
 #     plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
 #     print("Saved experiment_radar_chart.png")
 
+# def create_radar_chart(df, selected_folders=None):
+#     """Creates a radar chart for comparing specific pipelines."""
+#     # If no specific folders are provided, use all of them
+#     if selected_folders:
+#         df = df[df['Folder'].isin(selected_folders)]
+#
+#     pivot_df = df.pivot(index='Folder', columns='Metric', values='Score')
+#     metrics = list(pivot_df.columns)
+#     num_vars = len(metrics)
+#
+#     norm_df = pivot_df.copy()
+#     axis_labels = []
+#     bounds_info = []  # NEW: List to hold the worst-best text
+#
+#     # Normalize data and generate detailed labels simultaneously
+#     for metric in metrics:
+#         higher_is_better = COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST.get(metric, True)
+#         min_val = pivot_df[metric].min()
+#         max_val = pivot_df[metric].max()
+#
+#         if max_val == min_val:
+#             norm_df[metric] = 1.0
+#             worst_val, best_val = min_val, max_val
+#         elif higher_is_better:
+#             norm_df[metric] = (pivot_df[metric] - min_val) / (max_val - min_val)
+#             worst_val, best_val = min_val, max_val
+#         else:
+#             norm_df[metric] = (max_val - pivot_df[metric]) / (max_val - min_val)
+#             worst_val, best_val = max_val, min_val
+#
+#             # NEW: Clean axis label, separated bounds info
+#         axis_labels.append(metric)
+#         bounds_info.append(f"{metric}: {worst_val:.3g} to {best_val:.3g}")
+#
+#     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
+#     angles += angles[:1]
+#
+#     # CHANGED: Much wider figure (14x8) to create empty space on the right
+#     fig, ax = plt.subplots(figsize=(14, 8), subplot_kw=dict(polar=True))
+#
+#     plt.xticks(angles[:-1], axis_labels, size=11, fontweight='medium')
+#     ax.set_yticklabels([])
+#
+#     colors = sns.color_palette("husl", len(norm_df.index))
+#
+#     for idx, (folder_name, row) in enumerate(norm_df.iterrows()):
+#         values = row.values.flatten().tolist()
+#         values += values[:1]
+#
+#         ax.plot(angles, values, linewidth=2, linestyle='solid', label=folder_name, color=colors[idx])
+#         ax.fill(angles, values, color=colors[idx], alpha=0.2)
+#
+#     # 1. Main Pipeline Legend Top-Right
+#     # loc='upper left' anchors the top-left corner of the legend box to the coordinates provided
+#     plt.legend(title="Pipelines", loc='upper left', bbox_to_anchor=(1.15, 1.05), fontsize=11)
+#
+#     # 2. Metric Bounds Text Box Below Legend
+#     bounds_text = "Metric Bounds (Worst \u2192 Best)\n" + "-" * 35 + "\n" + "\n".join(bounds_info)
+#
+#     # transform=ax.transAxes treats 0,0 as bottom-left of chart and 1,1 as top-right.
+#     # X=1.15 aligns it with the legend above. Y=0.6 pushes it slightly down.
+#     ax.text(1.15, 0.6, bounds_text, transform=ax.transAxes, fontsize=11,
+#             verticalalignment='top',
+#             bbox=dict(boxstyle="round,pad=0.6", facecolor="white", edgecolor="lightgray", alpha=0.9))
+#
+#     # CHANGED: Physically force the radar chart to only occupy the left 60% of the image
+#     plt.subplots_adjust(left=0.05, right=0.6)
+#
+#     plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
+#     print("Saved experiment_radar_chart.png")
+
+
 def create_radar_chart(df, selected_folders=None):
     """Creates a radar chart for comparing specific pipelines."""
-    # If no specific folders are provided, use all of them
     if selected_folders:
         df = df[df['Folder'].isin(selected_folders)]
 
@@ -159,9 +230,8 @@ def create_radar_chart(df, selected_folders=None):
 
     norm_df = pivot_df.copy()
     axis_labels = []
-    bounds_info = []  # NEW: List to hold the worst-best text
+    bounds_info = []
 
-    # Normalize data and generate detailed labels simultaneously
     for metric in metrics:
         higher_is_better = COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST.get(metric, True)
         min_val = pivot_df[metric].min()
@@ -177,18 +247,21 @@ def create_radar_chart(df, selected_folders=None):
             norm_df[metric] = (max_val - pivot_df[metric]) / (max_val - min_val)
             worst_val, best_val = max_val, min_val
 
-            # NEW: Clean axis label, separated bounds info
         axis_labels.append(metric)
         bounds_info.append(f"{metric}: {worst_val:.3g} to {best_val:.3g}")
 
     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
     angles += angles[:1]
 
-    # CHANGED: Much wider figure (14x8) to create empty space on the right
-    fig, ax = plt.subplots(figsize=(14, 8), subplot_kw=dict(polar=True))
+    # Slightly wider figure for a bit more breathing room
+    fig, ax = plt.subplots(figsize=(15, 8), subplot_kw=dict(polar=True))
 
     plt.xticks(angles[:-1], axis_labels, size=11, fontweight='medium')
     ax.set_yticklabels([])
+
+    # --- FIX: Force the radar chart to strictly bound between 0.0 and 1.0 ---
+    # This stops lines from piercing through the outer circle
+    ax.set_ylim(0, 1.0)
 
     colors = sns.color_palette("husl", len(norm_df.index))
 
@@ -199,24 +272,23 @@ def create_radar_chart(df, selected_folders=None):
         ax.plot(angles, values, linewidth=2, linestyle='solid', label=folder_name, color=colors[idx])
         ax.fill(angles, values, color=colors[idx], alpha=0.2)
 
-    # 1. Main Pipeline Legend Top-Right
-    # loc='upper left' anchors the top-left corner of the legend box to the coordinates provided
-    plt.legend(title="Pipelines", loc='upper left', bbox_to_anchor=(1.15, 1.05), fontsize=11)
+    # --- CHANGED: Centered and Stacked Layout ---
 
-    # 2. Metric Bounds Text Box Below Legend
+    # 1. Legend: Anchor the *bottom-left* corner to X=1.15, Y=0.52 (just above center)
+    plt.legend(title="Pipelines", loc='lower left', bbox_to_anchor=(1.15, 0.52), fontsize=11)
+
+    # 2. Text Box: Anchor the *top-left* corner to X=1.15, Y=0.48 (just below center)
     bounds_text = "Metric Bounds (Worst \u2192 Best)\n" + "-" * 35 + "\n" + "\n".join(bounds_info)
-
-    # transform=ax.transAxes treats 0,0 as bottom-left of chart and 1,1 as top-right.
-    # X=1.15 aligns it with the legend above. Y=0.6 pushes it slightly down.
-    ax.text(1.15, 0.6, bounds_text, transform=ax.transAxes, fontsize=11,
-            verticalalignment='top',
+    ax.text(1.15, 0.48, bounds_text, transform=ax.transAxes, fontsize=11,
+            verticalalignment='top', horizontalalignment='left',
             bbox=dict(boxstyle="round,pad=0.6", facecolor="white", edgecolor="lightgray", alpha=0.9))
 
-    # CHANGED: Physically force the radar chart to only occupy the left 60% of the image
     plt.subplots_adjust(left=0.05, right=0.6)
 
     plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
     print("Saved experiment_radar_chart.png")
+
+
 
 
 if __name__ == '__main__':
