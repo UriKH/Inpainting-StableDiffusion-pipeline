@@ -53,42 +53,17 @@ class OurDatasetGenerator:
         :param pipeline: The pipeline to use for generating images.
         """
         os.makedirs(output_dir, exist_ok=True)
-        abs_input_path = os.path.abspath(input_path)
-        image_files = [f for f in os.listdir(abs_input_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        image_files = [f for f in os.listdir(input_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
-        for filename in tqdm(image_files, desc="Processing our images"):
-            img_path = os.path.join(abs_input_path, filename)
-
+        for i, filename in tqdm(enumerate(image_files), desc="Processing our images"):
+            img_path = os.path.join(input_path, filename)
+            init_image = Image.open(img_path).convert("RGB")
             try:
-                # 1. Extract ID directly from the current filename
-                # "500.jpg" -> "500" -> 500
-                img_id = int(filename.split('.')[0])
-
-                # 2. Check if this ID exists in your captions JSON
-                if img_id not in self.img_id_to_caption:
-                    print(f"Skipping {filename}: ID {img_id} not found in captions JSON.")
-                    continue
-
+                img_id = self.img_filename_to_id[filename]
                 prompt = self.img_id_to_caption[img_id]
-
-                # 3. Open the image
-                init_image = Image.open(img_path).convert("RGB")
-
             except Exception as e:
-                # This will now tell you EXACTLY what went wrong (KeyError, ValueError, etc.)
-                print(f"Error processing {filename}: {type(e).__name__} - {e}")
+                print(f'unexpected error: {e} (continue anyway!)')
                 continue
-        # image_files = [f for f in os.listdir(input_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-        #
-        # for i, filename in tqdm(enumerate(image_files), desc="Processing our images"):
-        #     img_path = os.path.join(input_path, filename)
-        #     init_image = Image.open(img_path).convert("RGB")
-        #     try:
-        #         img_id = self.img_filename_to_id[filename]
-        #         prompt = self.img_id_to_caption[img_id]
-        #     except Exception as e:
-        #         print(f'unexpected error: {e} (continue anyway!)')
-        #         continue
 
             seed_everything(base_seed + img_id)
             mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id)
