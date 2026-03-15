@@ -175,7 +175,7 @@ class COCOInpaintingMetricsScorer:
         gen_tensor = self.preprocess_image(generated_image)
         self.fid.update(real_tensor, real=True)
         self.fid.update(gen_tensor, real=False)
-        self.dists_scores.append(self.dists(real_tensor, gen_tensor))
+        self.dists_scores.append(float(self.dists(real_tensor, gen_tensor).item()))
         self.dinov2_scores.append(self.__get_dino_similarity(real_tensor, gen_tensor))
         self.clip_scores.append(self.__compute_clip_score(prompt, generated_image, self.clip_processor, self.clip_model, self.device))
         self.pick_scores.append(self.__compute_pick_score(prompt, generated_image, self.pick_processor, self.pick_model, self.device))

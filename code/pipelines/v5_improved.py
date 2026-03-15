@@ -1,5 +1,5 @@
-from pipelines.v3_improved import ImprovedInpaintPipelineV3
-from pipelines.pipeline import InpaintPipelineInput
+from code.pipelines.v3_improved import ImprovedInpaintPipelineV3
+from code.pipelines.pipeline import InpaintPipelineInput
 import torch
 from PIL import Image, ImageFilter
 import cv2 as cv

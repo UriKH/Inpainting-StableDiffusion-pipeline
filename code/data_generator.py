@@ -13,7 +13,7 @@ from coco_runner import COCODatasetGenerator
 from utils.getters import input_output_paths_args
 from utils.globals import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH, OUR_DATASET_PATH, OUR_DATASET_CAPTIONS_PATH
 from utils.torch_utils import clear_cache
-from pipelines.pipeline import InpaintingPipeLineScheme
+from code.pipelines.pipeline import InpaintingPipeLineScheme
 
 
 def generate(input_paths: str, output_paths: str, pipeline: InpaintingPipeLineScheme, generate_ours=False):

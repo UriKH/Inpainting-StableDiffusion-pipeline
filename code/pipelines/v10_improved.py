@@ -1,7 +1,7 @@
-from pipelines.v9_improved import ImprovedInpaintPipelineV9
+from code.pipelines.v9_improved import ImprovedInpaintPipelineV9
 import torch
 import math
-from pipelines.injector import Injector
+from code.pipelines.injector import Injector
 
 
 class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
