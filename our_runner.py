@@ -21,27 +21,27 @@ class OurDatasetGenerator:
     A class for generating images from our dataset using a specific pipeline.
     """
 
-    def __init__(self, instances_json_path: str, captions_json_path: str):
+    def __init__(self, instance_dir: str, captions_json_path: str):
         """
-        :param instances_json_path: Path to the instances JSON file.
+        :param instance_dir: Path to the instances directory containing images.
         :param captions_json_path: Path to the captions JSON file.
         """
         print('====== loading our dataset ======')
-        self.img_filename_to_id, self.img_id_to_caption = self.__load_our_dataset(instances_json_path, captions_json_path)
+        self.img_filename_to_id, self.img_id_to_caption = self.__load_our_dataset(instance_dir, captions_json_path)
         self.mask_generator = MaskGenerator(**MASKING_CONFIGS)
 
     @staticmethod
-    def __load_our_dataset(instances_json_path: str, captions_json_path: str):
+    def __load_our_dataset(instance_dir: str, captions_json_path: str):
         """
         load bounding boxes and captions from dataset
-        :param instances_json_path: Path to the instances JSON file.
+        :param instance_dir: Path to the instances directory containing images.
         :param captions_json_path: Path to the captions JSON file.
         """
         with open(captions_json_path, 'r') as f:
             prompts = json.load(f)
             prompts = {int(k): v for k, v in prompts.items()}
 
-        f_names = os.listdir(instances_json_path)
+        f_names = os.listdir(instance_dir)
         img_filename_to_id = {name: int(name.split('.')[0]) for name in f_names}
         return img_filename_to_id, prompts
 
@@ -53,17 +53,42 @@ class OurDatasetGenerator:
         :param pipeline: The pipeline to use for generating images.
         """
         os.makedirs(output_dir, exist_ok=True)
-        image_files = [f for f in os.listdir(input_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        abs_input_path = os.path.abspath(input_path)
+        image_files = [f for f in os.listdir(abs_input_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
-        for i, filename in tqdm(enumerate(image_files), desc="Processing our images"):
-            img_path = os.path.join(input_path, filename)
-            init_image = Image.open(img_path).convert("RGB")
+        for filename in tqdm(image_files, desc="Processing our images"):
+            img_path = os.path.join(abs_input_path, filename)
+
             try:
-                img_id = self.img_filename_to_id[filename]
+                # 1. Extract ID directly from the current filename
+                # "500.jpg" -> "500" -> 500
+                img_id = int(filename.split('.')[0])
+
+                # 2. Check if this ID exists in your captions JSON
+                if img_id not in self.img_id_to_caption:
+                    print(f"Skipping {filename}: ID {img_id} not found in captions JSON.")
+                    continue
+
                 prompt = self.img_id_to_caption[img_id]
+
+                # 3. Open the image
+                init_image = Image.open(img_path).convert("RGB")
+
             except Exception as e:
-                print(f'unexpected error: {e} (continue anyway!)')
+                # This will now tell you EXACTLY what went wrong (KeyError, ValueError, etc.)
+                print(f"Error processing {filename}: {type(e).__name__} - {e}")
                 continue
+        # image_files = [f for f in os.listdir(input_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        #
+        # for i, filename in tqdm(enumerate(image_files), desc="Processing our images"):
+        #     img_path = os.path.join(input_path, filename)
+        #     init_image = Image.open(img_path).convert("RGB")
+        #     try:
+        #         img_id = self.img_filename_to_id[filename]
+        #         prompt = self.img_id_to_caption[img_id]
+        #     except Exception as e:
+        #         print(f'unexpected error: {e} (continue anyway!)')
+        #         continue
 
             seed_everything(base_seed + img_id)
             mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id)
