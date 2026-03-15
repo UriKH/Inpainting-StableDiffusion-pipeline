@@ -10,3 +10,4 @@ torchvision
 scipy
 transformers
 torchmetrics[image]
+DISTS-pytorch
