@@ -1,7 +1,7 @@
 import torch
 from diffusers.models.attention_processor import AttnProcessor2_0
-from pipelines.cross_attention import MaskedCrossAttnProcessor
-from pipelines.self_attention import MaskedSelfAttnProcessor
+from code.pipelines.cross_attention import MaskedCrossAttnProcessor
+from code.pipelines.self_attention import MaskedSelfAttnProcessor
 
 
 class Injector:

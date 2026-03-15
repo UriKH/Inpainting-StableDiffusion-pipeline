@@ -3,12 +3,11 @@ import sys
 import json
 from PIL import Image, ImageDraw
 from tqdm import tqdm
-from typing import Tuple
 import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipelines.pipeline import InpaintPipelineInput, InpaintingPipeLineScheme
+from code.pipelines.pipeline import InpaintPipelineInput, InpaintingPipeLineScheme
 from mask_generator import MaskGenerator
 from utils.globals import MASKING_CONFIGS
 from utils.seed import set_seed

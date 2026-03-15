@@ -1,12 +1,12 @@
-from pipelines.pipeline import InpaintingPipeLineScheme, InpaintPipelineInput
+from code.pipelines.pipeline import InpaintingPipeLineScheme, InpaintPipelineInput
 import torch
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-from utils import torch_utils as utils
-from utils.globals import SD2_BASE
+from code.utils import torch_utils as utils
+from code.utils.globals import SD2_BASE
 import cv2 as cv
-from pipelines.vae_prepare import VaeConverter
+from code.pipelines.vae_prepare import VaeConverter
 
 
 class InpaintPipelineVanilla(InpaintingPipeLineScheme):

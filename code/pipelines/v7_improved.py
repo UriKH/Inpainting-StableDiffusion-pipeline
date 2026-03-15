@@ -1,9 +1,9 @@
-from pipelines.v6_improved import ImprovedInpaintPipelineV6
+from code.pipelines.v6_improved import ImprovedInpaintPipelineV6
 import torch
 from PIL import Image
 import torchvision.transforms.functional as TF
 import torch.nn.functional as F
-from pipelines.injector import Injector
+from code.pipelines.injector import Injector
 
 
 class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):

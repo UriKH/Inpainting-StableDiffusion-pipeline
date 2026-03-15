@@ -9,12 +9,12 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(current_dir)
 sys.path.append(root_dir)
 
-from utils.getters import input_output_paths_args
-from utils.seed import set_seed
-from utils.globals import MASKING_CONFIGS, COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
+from code.utils import input_output_paths_args
+from code.utils import set_seed
+from code.utils import COCO_INSTANCES_PATH, COCO_CAPTIONS_PATH
 from tqdm import tqdm
 from PIL import Image
-from coco_runner import COCODatasetGenerator
+from code.coco_runner import COCODatasetGenerator
 
 
 base_seed = 42

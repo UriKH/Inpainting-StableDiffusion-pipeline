@@ -1,35 +1,31 @@
-from pipelines.v7_improved import ImprovedInpaintPipelineV7
+from code.pipelines.v8_improved import ImprovedInpaintPipelineV8
 import torch
-from pipelines.injector import Injector
+from code.pipelines.injector import Injector
 
 
-class ImprovedInpaintPipelineV8(ImprovedInpaintPipelineV7):
-    def __init__(self, sa_dilation_threshold: float = 0.0, sa_resize_mode: str = 'nearest', **kwargs):
-        """
-        :param sa_dilation_threshold: The threshold for dilation in the self-attention layer.
-        :param sa_resize_mode: The resize mode for the self-attention layer.
-        """
+class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):
+    def __init__(self, use_sm_in_sa=False, **kwargs):
         super().__init__(**kwargs)
-        self.sa_dilation_threshold = sa_dilation_threshold
-        self.sa_resize_mode = sa_resize_mode
+        self.use_sm_in_sa = use_sm_in_sa
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask, num_inference_steps=50):
         latents, timesteps = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
-
         _, _, latent_h, latent_w = init_latents.shape
+
+        soft_attn_mask = self.__create_soft_mask(mask)
         self.unet = Injector.inject(
             unet=self.unet,
             latent_h=latent_h,
             latent_w=latent_w,
-            self_mask=mask,
-            cross_mask=None,
+            self_mask=mask if not self.use_sm_in_sa else soft_attn_mask,
+            cross_mask=soft_attn_mask,
             ignore_cross_attention=self.ignore_cross_attention,
             ca_resize_mode=self.ca_resize_mode,
             sa_resize_mode=self.sa_resize_mode,
             sa_dilation_threshold=self.sa_dilation_threshold
         )
-
+        
         try:
             for i, t in enumerate(timesteps):
                 latents = self.__denoise_step(t, text_embeddings, latents)
