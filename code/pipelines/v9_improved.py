@@ -1,6 +1,6 @@
-from code.pipelines.v8_improved import ImprovedInpaintPipelineV8
+from pipelines.v8_improved import ImprovedInpaintPipelineV8
 import torch
-from code.pipelines.injector import Injector
+from pipelines.injector import Injector
 
 
 class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):

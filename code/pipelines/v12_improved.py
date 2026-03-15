@@ -1,9 +1,9 @@
-from code.pipelines.v11_improved import ImprovedInpaintPipelineV11
+from pipelines.v11_improved import ImprovedInpaintPipelineV11
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
-from code.utils.perlin_noise import generate_perlin_noise_2d
-from code.pipelines.injector import Injector
+from utils.perlin_noise import generate_perlin_noise_2d
+from pipelines.injector import Injector
 
 
 class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):

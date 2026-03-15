@@ -1,5 +1,5 @@
-from code.pipelines.v10_improved import ImprovedInpaintPipelineV10
-from code.pipelines.pipeline import InpaintPipelineInput
+from pipelines.v10_improved import ImprovedInpaintPipelineV10
+from pipelines.pipeline import InpaintPipelineInput
 
 
 class ImprovedInpaintPipelineV11(ImprovedInpaintPipelineV10):

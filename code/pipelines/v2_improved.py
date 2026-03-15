@@ -1,4 +1,4 @@
-from code.pipelines.vanilla_pipeline import InpaintPipelineVanilla
+from pipelines.vanilla_pipeline import InpaintPipelineVanilla
 import torch
 from PIL import Image, ImageFilter
 import cv2 as cv

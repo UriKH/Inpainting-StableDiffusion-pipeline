@@ -1,5 +1,5 @@
-from code.pipelines.injector import Injector
-from code.pipelines.v11_improved import ImprovedInpaintPipelineV11
+from pipelines.injector import Injector
+from pipelines.v11_improved import ImprovedInpaintPipelineV11
 import torchvision.transforms.functional as TF
 import torch
 import torch.nn.functional as F
