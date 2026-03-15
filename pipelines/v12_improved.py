@@ -81,13 +81,12 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
                     max_t=max_t
                 )
 
-                # TODO: this was removed beacuse it didn't make too much sense...
-                # dynamic_soft_mask = self._create_soft_mask(organic_mask)
-                # for name, proc in self.unet.attn_processors.items():
-                #     if 'attn1' in name:
-                #         proc.mask_tensor = organic_mask
-                #     elif 'attn2' in name:
-                #         proc.mask_tensor = dynamic_soft_mask
+                dynamic_soft_mask = self._create_soft_mask(organic_mask)
+                for name, proc in self.unet.attn_processors.items():
+                    if 'attn1' in name:
+                        proc.mask_tensor = organic_mask
+                    elif 'attn2' in name:
+                        proc.mask_tensor = dynamic_soft_mask
 
                 # Predict noise
                 with torch.no_grad():
