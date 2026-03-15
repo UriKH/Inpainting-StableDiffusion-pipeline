@@ -180,7 +180,6 @@ class COCOInpaintingMetricsScorer:
         self.clip_scores.append(self.__compute_clip_score(prompt, generated_image, self.clip_processor, self.clip_model, self.device))
         self.pick_scores.append(self.__compute_pick_score(prompt, generated_image, self.pick_processor, self.pick_model, self.device))
 
-
     def update_reconstruction(self, real_image: Image.Image, generated_image: Image.Image):
         """
         Updates the SSIM, LPIPS, MSE and PSNR.
@@ -250,14 +249,12 @@ class COCOInpaintingMetricsScorer:
         try:
             prompt, img_id = self.coco_manager.get_prompt_img_id(real_image_path)
         except Exception as e:
-            print(f'unexpected exception: {e} (continue anyway!)')
-            return
+            raise Exception(f'unexpected exception: {e} (continue anyway!)')
         try:
             real_image = Image.open(real_image_path).convert("RGB")
             generated_image = Image.open(generated_image_path).convert("RGB")
         except FileNotFoundError as e:
-            print(f'no generated image in {generated_image_path} ...: {e}')
-            return
+            raise Exception(f'no generated image in {generated_image_path} ...: {e}')
 
         _, coverage = self.mask_generator(np.array(real_image), img_id)
         for i in range(0, 91, 5):

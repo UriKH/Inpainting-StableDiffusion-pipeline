@@ -16,7 +16,7 @@ class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV11):
         self.dmb_blur_kernel_size = dmb_blur_kernel_size
         self.dmb_sigma = dmb_sigma
 
-    def _get_dynamic_mask(self, mask_tensor, current_idx, total_steps):
+    def __get_dynamic_mask(self, mask_tensor, current_idx, total_steps):
         """
         Linearly anneals the mask blur from max_sigma down to a hard boundary.
         :param mask_tensor: The binary mask tensor.
@@ -70,7 +70,7 @@ class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV11):
                 else:
                     background = init_latents
 
-                dynamic_mask = self._get_dynamic_mask(mask, i, len(schedule_indices))
+                dynamic_mask = self.__get_dynamic_mask(mask, i, len(schedule_indices))
                 latents = (background * (1 - dynamic_mask)) + (latents * dynamic_mask)
         finally:
             self._remove_masked_attention()

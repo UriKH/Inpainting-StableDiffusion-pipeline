@@ -16,22 +16,23 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
     def __init__(self, model_id: str = MODEL_ID, device: str = DEVICE, **kwargs):
         super().__init__(model_id, device, **kwargs)
 
-    def encode_prompt(self, prompt: str, text_encoder, tokenizer):
+    def encode_prompt(self, prompt: str, encoder, tokenizer):
         """
         Create the prompt embeddings and the unconditional prompt embeddings.
         :param prompt: The prompt to encode
-        :param text_encoder: The text encoder model
+        :param encoder: The text encoder model
         :param tokenizer: The tokenizer model
         :return: The prompt embeddings [uncond, text]
         """
         text_input = tokenizer(
             prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt"
         )
-        text_embeddings = text_encoder(text_input.input_ids.to(self.device))[0]
-        uncond_input = tokenizer([""], padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt")
-        uncond_embeddings = text_encoder(uncond_input.input_ids.to(self.device))[0]
-        text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
-        return text_embeddings
+        uncond_input = tokenizer(
+            [""], padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
+        )
+        text_embeddings = encoder(text_input.input_ids.to(self.device))[0]
+        uncond_embeddings = encoder(uncond_input.input_ids.to(self.device))[0]
+        return torch.cat([uncond_embeddings, text_embeddings])
 
     def prepare_latents(self, image: Image.Image):
         """

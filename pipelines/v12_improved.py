@@ -2,7 +2,7 @@ from pipelines.v11_improved import ImprovedInpaintPipelineV11
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
-from utils.torch_utils import generate_perlin_noise_2d
+from utils.perlin_noise import generate_perlin_noise_2d
 
 
 class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
@@ -30,8 +30,9 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
             return base_mask
 
         rho = 1.0 - (t.item() / max_t)
-        pad = self.om_dilation_kernel // 2
-        dilated_mask = F.max_pool2d(base_mask, kernel_size=self.om_dilation_kernel, stride=1, padding=pad)
+        dilated_mask = F.max_pool2d(
+            base_mask, kernel_size=self.om_dilation_kernel, stride=1, padding=self.om_dilation_kernel // 2
+        )
         smooth_noise = generate_perlin_noise_2d(
             shape=base_mask.shape,
             res=(self.om_noise_res, self.om_noise_res),
@@ -44,7 +45,7 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
         elif self.om_thresh == 'cubic':
             current_threshold = 0.2 + ((rho ** 2) * 0.6)
         else:
-            raise ValueError(f'bad threshold type {self.om_thresh}. Use: linear/cubic')
+            raise ValueError(f'Bad threshold type {self.om_thresh}. Use: linear/cubic')
 
         dynamic_mask = (noisy_mask > current_threshold).float()
         extended = torch.max(dynamic_mask, base_mask)

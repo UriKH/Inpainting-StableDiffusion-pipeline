@@ -41,13 +41,20 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
         while i < num_inference_steps:
             schedule_indices.append(i)
 
-            if (i + 1) % self.jump_length == 0 and jumps_done < self.jump_n_sample - 1:
-                i = i - self.jump_length + 1
-                jumps_done += 1
-            else:
-                if (i + 1) % self.jump_length == 0:
+            if (i + 1) % self.jump_length == 0:
+                if jumps_done < self.jump_n_sample - 1:
+                    jumps_done += 1
+                    i = i - self.jump_length
+                else:
                     jumps_done = 0
-                i += 1
+            i += 1
+            # if (i + 1) % self.jump_length == 0 and jumps_done < self.jump_n_sample - 1:
+            #     i = i - self.jump_length + 1
+            #     jumps_done += 1
+            # else:
+            #     if (i + 1) % self.jump_length == 0:
+            #         jumps_done = 0
+            #     i += 1
         return schedule_indices
 
     def _get_dynamic_schedule(self, num_inference_steps: int) -> list[int]:
@@ -65,7 +72,7 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
             curr_jumps = int(math.cos(progress * math.pi / 2.) * (self.ds_max_jumps - self.ds_min_jumps) + self.ds_min_jumps)
 
             slice_len = min(curr_jump_length, num_inference_steps - i)
-            schedule_indices.extend([i + v for v in range(slice_len)] * curr_jumps)
+            schedule_indices += [i + v for v in range(slice_len)] * curr_jumps
             i += curr_jump_length
         return schedule_indices
 
@@ -107,15 +114,14 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
         """
         if step_index + 1 < len(timesteps):
             t_prev = timesteps[step_index + 1]
-            alpha_prod_prev = self.scheduler.alphas_cumprod[t_prev].to(self.device)
+            alpha_p_prev = self.scheduler.alphas_cumprod[t_prev].to(self.device)
         else:
-            alpha_prod_prev = torch.tensor(1.0, device=self.device)
+            alpha_p_prev = torch.tensor(1.0, device=self.device)
 
         # compute and add the matching noise to the jumped-back latents
-        alpha_prod_target = self.scheduler.alphas_cumprod[t_next].to(self.device)
-        ratio = alpha_prod_target / alpha_prod_prev
-        noise = torch.randn_like(latents)
-        latents = torch.sqrt(ratio) * latents + torch.sqrt(1 - ratio) * noise
+        alpha_p_target = self.scheduler.alphas_cumprod[t_next].to(self.device)
+        ratio = alpha_p_target / alpha_p_prev
+        latents = torch.sqrt(ratio) * latents + torch.sqrt(1 - ratio) * torch.randn_like(latents)
         return latents
 
     @torch.no_grad()

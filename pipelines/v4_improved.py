@@ -18,14 +18,10 @@ class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
         :return: The filled image.
         (This idea was inspired by a conversation with AI)
         """
-        mask_arr = np.array(mask_image)
-        mask_bool = mask_arr == 255
-        if not np.any(mask_bool):
-            return real_image
-
-        real_arr = np.array(real_image).astype(np.float32)
-        filled_arr = real_arr.copy()
-        filled_arr[mask_bool] = np.mean(real_arr[~mask_bool], axis=0)
+        mask_bool = np.array(mask_image) == 255
+        img_arr = np.array(real_image).astype(np.float32)
+        filled = img_arr.copy()
+        filled[mask_bool] = np.mean(img_arr[~mask_bool], axis=0)
         kernel = np.array(
             [[0.0,  0.25, 0.0],
             [0.25, 0.0,  0.25],
@@ -36,11 +32,11 @@ class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
         max_iters = 1000
         tolerance = 0.05
         for i in range(max_iters):
-            smoothed = cv.filter2D(filled_arr, -1, kernel, borderType=cv.BORDER_REPLICATE)
-            max_shift = np.max(np.abs(smoothed[mask_bool] - filled_arr[mask_bool]))
-            filled_arr[mask_bool] = smoothed[mask_bool]
+            smoothed = cv.filter2D(filled, -1, kernel, borderType=cv.BORDER_REPLICATE)
+            max_shift = np.max(np.abs(smoothed[mask_bool] - filled[mask_bool]))
+            filled[mask_bool] = smoothed[mask_bool]
             if max_shift < tolerance:
                 break
                 
-        filled_arr = np.clip(filled_arr, 0, 255).astype(np.uint8)
-        return Image.fromarray(filled_arr)
+        filled = np.clip(filled, 0, 255).astype(np.uint8)
+        return Image.fromarray(filled)

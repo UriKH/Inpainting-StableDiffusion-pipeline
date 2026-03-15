@@ -21,28 +21,25 @@ class ImprovedInpaintPipelineV5(ImprovedInpaintPipelineV3):
         self.use_negative_prompt = use_negative_prompt
         self.ignore_improvement_v5 = ignore_improvement_v5
 
-    def encode_prompt(self, prompt: str, text_encoder, tokenizer):
+    def encode_prompt(self, prompt: str, encoder, tokenizer):
         """
         Encodes the prompt into text embeddings.
         :param prompt: The prompt to encode.
-        :param text_encoder: The text encoder model.
+        :param encoder: The text encoder model.
         :param tokenizer: The tokenizer model.
         :return: The encoded prompt [uncond, text].
         """
-        text_input = tokenizer(
-            prompt, padding="max_length", max_length=tokenizer.model_max_length, truncation=True, return_tensors="pt"
-        )
-        text_embeddings = text_encoder(text_input.input_ids.to(self.device))[0]
+        _, text_embeddings = super().encode_prompt(prompt, encoder, tokenizer).chunk(2)
         uncond_input = tokenizer(
             [
-                "ugly, tiling, poorly drawn, out of frame, deformed, blurry, bad anatomy, bad proportions, extra limbs, artifacts, miniature scene, entire picture, out of context, mismatched lighting"
+                "ugly, tiling, poorly drawn, out of frame, deformed, blurry, bad anatomy, bad proportions, extra limbs,"
+                " artifacts, miniature scene, entire picture, out of context, mismatched lighting"
                 if self.use_negative_prompt and not self.ignore_improvement_v5 else ""
             ],
             padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
         )
-        uncond_embeddings = text_encoder(uncond_input.input_ids.to(self.device))[0]
-        text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
-        return text_embeddings
+        uncond_embeddings = encoder(uncond_input.input_ids.to(self.device))[0]
+        return torch.cat([uncond_embeddings, text_embeddings])
     
     def mask_preprocessing(self, mask_image: Image.Image) -> Image.Image:
         """

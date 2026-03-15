@@ -27,7 +27,7 @@ class COCODatasetGenerator:
         :param captions_json_path: Path to the COCO captions JSON file.
         """
         print('====== loading COCO ======')
-        self.img_filename_to_id, self.img_id_to_caption = self.__load_coco_data(instances_json_path, captions_json_path)
+        self.filename_to_id, self.id_to_caption = self.__load_coco_data(instances_json_path, captions_json_path)
         self.mask_generator = MaskGenerator(**MASKING_CONFIGS)
 
     @staticmethod
@@ -40,16 +40,16 @@ class COCODatasetGenerator:
         with open(instances_json_path, 'r') as f:
             instances_data = json.load(f)
 
-        img_filename_to_id = {img['file_name']: img['id'] for img in instances_data['images']}
+        filename_to_id = {img['file_name']: img['id'] for img in instances_data['images']}
 
         with open(captions_json_path, 'r') as f:
             captions_data = json.load(f)
 
-        img_id_to_caption = {}
+        id_to_caption = {}
         for cap in tqdm(captions_data['annotations'], desc='loading COCO captions...'):
-            if cap['image_id'] not in img_id_to_caption:
-                img_id_to_caption[cap['image_id']] = cap['caption'].strip().rstrip('.')
-        return img_filename_to_id, img_id_to_caption
+            if cap['image_id'] not in id_to_caption:
+                id_to_caption[cap['image_id']] = cap['caption'].strip().rstrip('.')
+        return filename_to_id, id_to_caption
 
     def generate(self, input_path: str, output_dir: str, pipeline: InpaintingPipeLineScheme) -> None:
         """
@@ -84,9 +84,9 @@ class COCODatasetGenerator:
         :param image_path: Path to the image.
         """
         img_id = self.get_img_id(image_path)
-        if img_id not in self.img_id_to_caption:
+        if img_id not in self.id_to_caption:
             raise ValueError(f"No annotations found for image {image_path}.")
-        global_caption = self.img_id_to_caption[img_id]
+        global_caption = self.id_to_caption[img_id]
         return global_caption, img_id
 
     def get_img_id(self, image_path: str) -> int:
@@ -95,6 +95,6 @@ class COCODatasetGenerator:
         :param image_path: Path to the image.
         """
         filename = os.path.basename(image_path)
-        if filename not in self.img_filename_to_id:
+        if filename not in self.filename_to_id:
             raise ValueError(f"Image {image_path} not found in the dataset.")
-        return self.img_filename_to_id[filename]
+        return self.filename_to_id[filename]

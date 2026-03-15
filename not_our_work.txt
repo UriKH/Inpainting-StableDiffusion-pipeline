@@ -1,4 +1,18 @@
 pipelines/cross_attention.py
 pipelines/self_attention.py
+pipelines/v4_improved.py
 
-There are two functions in vanilla: decode_latents, prepare_latents.
+metrics.py - __prepare_for_dino, __compute_pick_score, __compute_clip_score
+pipelines/vanilla_pipeline.py - decode_latents, prepare_latents.
+
+pipelines/v6_improved.py - two functions: _inject_masked_attention, _remove_masked_attention
+pipelines/v8_improved.py - _inject_masked_attention
+pipelines/v9_improved.py - _inject_masked_attention
+
+data/download_coco.py
+utils/perlin_noise.py
+utils/seed.py
+utils/masking_tool.py
+
+graphs/graph_metrics.py
+graphs/coverage_hist.py

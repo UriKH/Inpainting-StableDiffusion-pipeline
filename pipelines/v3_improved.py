@@ -17,14 +17,12 @@ class ImprovedInpaintPipelineV3(InpaintPipelineVanilla):
         :param mask_image: The mask image to guide the inpainting process.
         :return: The filled image.
         """
-        real_arr = np.array(real_image)
-        mask_arr = np.array(mask_image)
-        
-        mask_bool = mask_arr == 255
+        img_arr = np.array(real_image)
+        mask_bool = np.array(mask_image) == 255
         _, indices = distance_transform_edt(mask_bool, return_indices=True)
         
-        filled_arr = real_arr.copy()
-        filled_arr[mask_bool] = real_arr[tuple(indices[:, mask_bool])]
-        blurred = cv.GaussianBlur(filled_arr, (21, 21), 0)
-        filled_arr[mask_bool] = blurred[mask_bool]
-        return Image.fromarray(filled_arr)
+        filled = img_arr.copy()
+        filled[mask_bool] = img_arr[tuple(indices[:, mask_bool])]
+        blurred = cv.GaussianBlur(filled, (21, 21), 0)
+        filled[mask_bool] = blurred[mask_bool]
+        return Image.fromarray(filled)
