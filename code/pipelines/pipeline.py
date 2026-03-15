@@ -81,9 +81,9 @@ class InpaintingPipeLineScheme(ABC):
         :param target_size: The base size the image will be resized to.
         """
         original_width, original_height = init_image.size
-        scale = int(target_size / max(original_width, original_height))
-        w = original_width * scale
-        h = original_height * scale
+        scale = target_size / max(original_width, original_height)
+        w = int(original_width * scale)
+        h = int(original_height * scale)
         img_resized = init_image.resize((w, h), Image.LANCZOS)
         mask_resized = mask_image.resize((w, h), Image.NEAREST)
 
@@ -113,9 +113,9 @@ class InpaintingPipeLineScheme(ABC):
         :param target_size: The base size the image was padded to.
         """
         original_width, original_height = original_size
-        scale = int(target_size / max(original_width, original_height))
-        w = original_width * scale
-        h = original_height * scale
+        scale = target_size / max(original_width, original_height)
+        w = int(original_width * scale)
+        h = int(original_height * scale)
         pad_w = target_size - w
         pad_left = pad_w // 2
         pad_h = target_size - h
