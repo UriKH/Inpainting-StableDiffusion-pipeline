@@ -19,7 +19,7 @@ class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):
         self.blur_kernel = sm_blur_kernel
         self.sigma = sm_sigma
 
-    def __create_soft_mask(self, mask_tensor):
+    def _create_soft_mask(self, mask_tensor):
         """
         Applies dilation and Gaussian blur to the binary mask tensor.
         :param mask_tensor: The binary mask tensor.
@@ -32,10 +32,10 @@ class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask, num_inference_steps=50):
-        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
+        latents, timesteps = self._initialize_denoise_loop(init_latents, mask, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
 
-        soft_attn_mask = self.__create_soft_mask(mask)
+        soft_attn_mask = self._create_soft_mask(mask)
         self.unet = Injector.inject(
             unet=self.unet,
             latent_h=latent_h,

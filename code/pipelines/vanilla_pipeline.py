@@ -72,7 +72,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         return VaeConverter.tensor_to_pil(image)
 
     @torch.no_grad()
-    def __initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps: int):
+    def _initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps: int):
         """
         Initialize the denoising loop.
         :param init_latents: The initial latents.
@@ -119,7 +119,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         :param num_inference_steps: The number of inference steps.
         :return: The denoised latents.
         """
-        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
+        latents, timesteps = self._initialize_denoise_loop(init_latents, mask, num_inference_steps)
 
         for i, t in enumerate(timesteps):
             latents = self.__denoise_step(t, text_embeddings, latents)

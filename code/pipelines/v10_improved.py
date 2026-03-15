@@ -78,7 +78,7 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
         return schedule_indices
 
     @torch.no_grad()
-    def __initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps):
+    def _initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps):
         """
         Initialize the denoising loop, suitable for both the RePaint and dynamic schedules.
         :param init_latents: The initial latents.
@@ -105,7 +105,7 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
                         * (1 - mask_tensor)) + (noise * mask_tensor))
         return latents, timesteps, schedule_indices
 
-    def __resampling_latent_update(self, latents, t_next, step_index, timesteps):
+    def _resampling_latent_update(self, latents, t_next, step_index, timesteps):
         """
         Preforms time jump noise calculation and update the latents accordingly
         :param latents: The current latents.
@@ -127,10 +127,10 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask, num_inference_steps=50):
-        latents, timesteps, schedule_indices = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
+        latents, timesteps, schedule_indices = self._initialize_denoise_loop(init_latents, mask, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
 
-        soft_attn_mask = self.__create_soft_mask(mask)
+        soft_attn_mask = self._create_soft_mask(mask)
         self.unet = Injector.inject(
             unet=self.unet,
             latent_h=latent_h,
@@ -154,7 +154,7 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
                     t_next = timesteps[scheduler_next_step]
 
                     if scheduler_next_step < step_index:        # jump back in time
-                        latents = self.__resampling_latent_update(latents, t_next, step_index, timesteps)
+                        latents = self._resampling_latent_update(latents, t_next, step_index, timesteps)
 
                     background = self.scheduler.add_noise(init_latents, torch.randn_like(init_latents), t_next)
                 else:

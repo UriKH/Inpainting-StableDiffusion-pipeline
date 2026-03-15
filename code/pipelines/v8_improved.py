@@ -15,7 +15,7 @@ class ImprovedInpaintPipelineV8(ImprovedInpaintPipelineV7):
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask, num_inference_steps=50):
-        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
+        latents, timesteps = self._initialize_denoise_loop(init_latents, mask, num_inference_steps)
 
         _, _, latent_h, latent_w = init_latents.shape
         self.unet = Injector.inject(

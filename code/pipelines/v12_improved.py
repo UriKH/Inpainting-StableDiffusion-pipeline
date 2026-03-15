@@ -59,10 +59,10 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask, num_inference_steps: int = 50):
-        latents, timesteps, schedule_indices = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
+        latents, timesteps, schedule_indices = self._initialize_denoise_loop(init_latents, mask, num_inference_steps)
 
         _, _, latent_h, latent_w = init_latents.shape
-        soft_attn_mask = self.__create_soft_mask(mask)
+        soft_attn_mask = self._create_soft_mask(mask)
         self.unet = Injector.inject(
             unet=self.unet,
             latent_h=latent_h,
@@ -93,16 +93,16 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
                     if 'attn1' in name:
                         proc.mask_tensor = organic_mask
                     elif 'attn2' in name:
-                        proc.mask_tensor = self.__create_soft_mask(organic_mask)
+                        proc.mask_tensor = self._create_soft_mask(organic_mask)
 
-                latents = self.__denoise_step(t, text_embeddings, latents)
+                latents = self._denoise_step(t, text_embeddings, latents)
 
                 if i != len(schedule_indices) - 1:
                     scheduler_next_step = schedule_indices[i + 1]
                     t_next = timesteps[scheduler_next_step]
 
                     if scheduler_next_step < step_index:
-                        latents = self.__resampling_latent_update(latents, t_next, step_index, timesteps)
+                        latents = self._resampling_latent_update(latents, t_next, step_index, timesteps)
 
                     background = self.scheduler.add_noise(init_latents, torch.randn_like(init_latents), t_next)
                 else:
