@@ -1,0 +1,4 @@
+pipelines/cross_attention.py
+pipelines/self_attention.py
+
+There are two functions in vanilla: decode_latents, prepare_latents.

@@ -106,25 +106,25 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         :param text_embeddings: The text embeddings.
         :param latents: The current latents.
         """
-        latent_model_input = torch.cat([latents] * 2)
-        latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-        noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
-        noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-        noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
-        latents = self.scheduler.step(noise_pred, t, latents).prev_sample
+        latent_in = torch.cat([latents] * 2)
+        latent_in = self.scheduler.scale_model_input(latent_in, t)
+        pred_noise = self.unet(latent_in, t, encoder_hidden_states=text_embeddings).sample
+        unc_pred_noise, text_pred_noise = pred_noise.chunk(2)
+        pred_noise = self.CFG_SCALE_FACTOR * text_pred_noise + (1 - self.CFG_SCALE_FACTOR) * unc_pred_noise
+        latents = self.scheduler.step(pred_noise, t, latents).prev_sample
         return latents
 
     @torch.no_grad()
-    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps: int = 50):
+    def denoise(self, text_embeddings, init_latents, mask, num_inference_steps: int = 50):
         """
         Denoise the initial latents using the UNet - generate the masked area DDPM style.
         :param text_embeddings: The text embeddings.
         :param init_latents: The initial latents.
-        :param mask_tensor: The mask tensor.
+        :param mask: The mask tensor.
         :param num_inference_steps: The number of inference steps.
         :return: The denoised latents.
         """
-        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
 
         for i, t in enumerate(timesteps):
             latents = self.__denoise_step(t, text_embeddings, latents)
@@ -133,11 +133,11 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
             if i < len(timesteps) - 1:
                 t_next = timesteps[i + 1]
                 noise = torch.randn_like(init_latents)
-                known_background = self.scheduler.add_noise(init_latents, noise, t_next)
+                background = self.scheduler.add_noise(init_latents, noise, t_next)
             else:
-                known_background = init_latents
+                background = init_latents
 
-            latents = (known_background * (1 - mask_tensor)) + (latents * mask_tensor)
+            latents = (background * (1 - mask)) + (latents * mask)
         return latents
 
     def mask_preprocessing(self, mask_image: Image.Image) -> Image.Image:

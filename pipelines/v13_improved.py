@@ -47,32 +47,31 @@ class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV11):
         )
 
     @torch.no_grad()
-    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        latents, timesteps, schedule_indices = self.__initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+    def denoise(self, text_embeddings, init_latents, mask, num_inference_steps=50):
+        latents, timesteps, schedule_indices = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
 
-        soft_attn_mask = self._create_soft_mask(mask_tensor)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask_tensor if not self.use_sm_in_sa else soft_attn_mask)
+        soft_attn_mask = self.__create_soft_mask(mask)
+        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask if not self.use_sm_in_sa else soft_attn_mask)
         
         try:
-            for idx, step_index in enumerate(schedule_indices):
+            for i, step_index in enumerate(schedule_indices):
                 t = timesteps[step_index]
                 latents = self.__denoise_step(t, text_embeddings, latents)
 
-                if idx != len(schedule_indices) - 1:
-                    scheduler_next_step = schedule_indices[idx + 1]
+                if i != len(schedule_indices) - 1:
+                    scheduler_next_step = schedule_indices[i + 1]
                     t_next = timesteps[scheduler_next_step]
                 
                     if scheduler_next_step < step_index:
                         latents = self.__resampling_latent_update(latents, t_next, step_index, timesteps)
 
-                    background_noise = torch.randn_like(init_latents)
-                    known_background = self.scheduler.add_noise(init_latents, background_noise, t_next)
+                    background = self.scheduler.add_noise(init_latents, torch.randn_like(init_latents), t_next)
                 else:
-                    known_background = init_latents
+                    background = init_latents
 
-                dynamic_mask = self._get_dynamic_mask(mask_tensor, idx, len(schedule_indices))
-                latents = (known_background * (1 - dynamic_mask)) + (latents * dynamic_mask)
+                dynamic_mask = self._get_dynamic_mask(mask, i, len(schedule_indices))
+                latents = (background * (1 - dynamic_mask)) + (latents * dynamic_mask)
         finally:
             self._remove_masked_attention()
         return latents

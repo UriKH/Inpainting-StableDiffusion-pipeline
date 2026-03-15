@@ -56,22 +56,21 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
         return extended
 
     @torch.no_grad()
-    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps: int = 50):
-        latents, timesteps, schedule_indices = self.__initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+    def denoise(self, text_embeddings, init_latents, mask, num_inference_steps: int = 50):
+        latents, timesteps, schedule_indices = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
 
         _, _, latent_h, latent_w = init_latents.shape
-        soft_attn_mask = self._create_soft_mask(mask_tensor)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask,
-                                      mask_tensor if not self.use_sm_in_sa else soft_attn_mask)
+        soft_attn_mask = self.__create_soft_mask(mask)
+        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask if not self.use_sm_in_sa else soft_attn_mask)
         max_t = self.scheduler.config.num_train_timesteps
 
         try:
-            for idx, step_index in enumerate(schedule_indices):
+            for i, step_index in enumerate(schedule_indices):
                 t = timesteps[step_index]
 
                 # create organic mask
                 organic_mask = self.compute_organic_mask(
-                    base_mask=mask_tensor,
+                    base_mask=mask,
                     t=t,
                     max_t=max_t
                 )
@@ -81,23 +80,22 @@ class ImprovedInpaintPipelineV12(ImprovedInpaintPipelineV11):
                     if 'attn1' in name:
                         proc.mask_tensor = organic_mask
                     elif 'attn2' in name:
-                        proc.mask_tensor = self._create_soft_mask(organic_mask)
+                        proc.mask_tensor = self.__create_soft_mask(organic_mask)
 
                 latents = self.__denoise_step(t, text_embeddings, latents)
 
-                if idx != len(schedule_indices) - 1:
-                    scheduler_next_step = schedule_indices[idx + 1]
+                if i != len(schedule_indices) - 1:
+                    scheduler_next_step = schedule_indices[i + 1]
                     t_next = timesteps[scheduler_next_step]
 
                     if scheduler_next_step < step_index:
                         latents = self.__resampling_latent_update(latents, t_next, step_index, timesteps)
 
-                    background_noise = torch.randn_like(init_latents)
-                    known_background = self.scheduler.add_noise(init_latents, background_noise, t_next)
+                    background = self.scheduler.add_noise(init_latents, torch.randn_like(init_latents), t_next)
                 else:
-                    known_background = init_latents
+                    background = init_latents
 
-                latents = (known_background * (1 - organic_mask)) + (latents * organic_mask)
+                latents = (background * (1 - organic_mask)) + (latents * organic_mask)
         finally:
             self._remove_masked_attention()
         return latents

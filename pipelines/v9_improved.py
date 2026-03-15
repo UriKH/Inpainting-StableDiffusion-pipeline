@@ -36,12 +36,12 @@ class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):
         self.unet.set_attn_processor(processor_dict)
 
     @torch.no_grad()
-    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+    def denoise(self, text_embeddings, init_latents, mask, num_inference_steps=50):
+        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
 
-        soft_attn_mask = self._create_soft_mask(mask_tensor)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask_tensor if not self.use_sm_in_sa else soft_attn_mask)
+        soft_attn_mask = self.__create_soft_mask(mask)
+        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask if not self.use_sm_in_sa else soft_attn_mask)
         
         try:
             for i, t in enumerate(timesteps):
@@ -50,10 +50,10 @@ class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):
                 if i < len(timesteps) - 1:
                     t_next = timesteps[i + 1]
                     noise = torch.randn_like(init_latents)
-                    known_background = self.scheduler.add_noise(init_latents, noise, t_next)
+                    background = self.scheduler.add_noise(init_latents, noise, t_next)
                 else:
-                    known_background = init_latents
-                latents = (known_background * (1 - mask_tensor)) + (latents * mask_tensor)
+                    background = init_latents
+                latents = (background * (1 - mask)) + (latents * mask)
         finally:
             self._remove_masked_attention()
         return latents

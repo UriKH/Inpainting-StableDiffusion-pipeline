@@ -80,15 +80,15 @@ class InpaintingPipeLineScheme(ABC):
         :param mask_image: The mask image to guide the inpainting process.
         :param target_size: The base size the image will be resized to.
         """
-        width, height = init_image.size
-        scale = target_size / max(width, height)
-        new_w = int(width * scale)
-        new_h = int(height * scale)
-        img_resized = init_image.resize((new_w, new_h), Image.LANCZOS)
-        mask_resized = mask_image.resize((new_w, new_h), Image.NEAREST)
+        original_width, original_height = init_image.size
+        scale = int(target_size / max(original_width, original_height))
+        w = original_width * scale
+        h = original_height * scale
+        img_resized = init_image.resize((w, h), Image.LANCZOS)
+        mask_resized = mask_image.resize((w, h), Image.NEAREST)
 
-        pad_w = target_size - new_w
-        pad_h = target_size - new_h
+        pad_w = target_size - w
+        pad_h = target_size - h
         pad_left = pad_w // 2
         pad_right = pad_w - pad_left
         pad_top = pad_h // 2
@@ -112,17 +112,17 @@ class InpaintingPipeLineScheme(ABC):
         :param original_size: A tuple of (original_width, original_height).
         :param target_size: The base size the image was padded to.
         """
-        orig_width, orig_height = original_size
-        scale = target_size / max(orig_width, orig_height)
-        new_w = int(orig_width * scale)
-        new_h = int(orig_height * scale)
-        pad_w = target_size - new_w
+        original_width, original_height = original_size
+        scale = int(target_size / max(original_width, original_height))
+        w = original_width * scale
+        h = original_height * scale
+        pad_w = target_size - w
         pad_left = pad_w // 2
-        pad_h = target_size - new_h
+        pad_h = target_size - h
         pad_top = pad_h // 2
 
-        cropped_image = generated_image.crop((pad_left, pad_top, pad_left + new_w, pad_top + new_h))
-        final_image = cropped_image.resize((orig_width, orig_height), Image.LANCZOS)
+        cropped_image = generated_image.crop((pad_left, pad_top, pad_left + w, pad_top + h))
+        final_image = cropped_image.resize((original_width, original_height), Image.LANCZOS)
         return final_image
 
     @abstractmethod
