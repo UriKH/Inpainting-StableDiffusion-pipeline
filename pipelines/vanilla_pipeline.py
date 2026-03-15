@@ -113,11 +113,13 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
             latent_model_input = torch.cat([latents] * 2)
             latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
 
+            # predict noise
             noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
             noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-            noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
+            noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)  # preform guidance
             latents = self.scheduler.step(noise_pred, t, latents).prev_sample
 
+            # add noise to latents only if not finished after this step
             if i < len(timesteps) - 1:
                 t_next = timesteps[i + 1]
                 noise = torch.randn_like(init_latents)
