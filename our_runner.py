@@ -69,6 +69,9 @@ class OurDatasetGenerator:
             mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id)
             mask_image = Image.fromarray(mask_image).convert("L")
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)
+
+            # remove this later
+            pipe_in.init_image.save(os.path.join(output_dir, f'{img_id}_init.png'))
             result_img = pipeline.pipe(pipe_in)
             out_path = os.path.join(output_dir, filename)
             result_img.save(out_path)
