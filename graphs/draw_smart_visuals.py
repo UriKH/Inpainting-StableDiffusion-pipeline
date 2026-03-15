@@ -254,9 +254,10 @@ def create_radar_chart(df, selected_folders=None):
     angles += angles[:1]
 
     # Slightly wider figure for a bit more breathing room
-    fig, ax = plt.subplots(figsize=(15, 8), subplot_kw=dict(polar=True))
+    fig, ax = plt.subplots(figsize=(16, 7), subplot_kw=dict(polar=True))
 
     plt.xticks(angles[:-1], axis_labels, size=11, fontweight='medium')
+    ax.tick_params(axis='x', pad=18)
     ax.set_yticklabels([])
 
     # --- FIX: Force the radar chart to strictly bound between 0.0 and 1.0 ---
