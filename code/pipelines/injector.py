@@ -35,6 +35,8 @@ class Injector:
                 processor_dict[name] = processor
             else:
                 processor_dict[name] = AttnProcessor2_0()
+
+        unet.set_attn_processor(processor_dict)
         return unet
 
     @staticmethod
