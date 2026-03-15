@@ -1,3 +1,4 @@
+from pipelines.injector import Injector
 from pipelines.v11_improved import ImprovedInpaintPipelineV11
 import torchvision.transforms.functional as TF
 import torch
@@ -52,7 +53,17 @@ class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV11):
         _, _, latent_h, latent_w = init_latents.shape
 
         soft_attn_mask = self.__create_soft_mask(mask)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask if not self.use_sm_in_sa else soft_attn_mask)
+        self.unet = Injector.inject(
+            unet=self.unet,
+            latent_h=latent_h,
+            latent_w=latent_w,
+            self_mask=mask if not self.use_sm_in_sa else soft_attn_mask,
+            cross_mask=soft_attn_mask,
+            ignore_cross_attention=self.ignore_cross_attention,
+            ca_resize_mode=self.ca_resize_mode,
+            sa_resize_mode=self.sa_resize_mode,
+            sa_dilation_threshold=self.sa_dilation_threshold
+        )
         
         try:
             for i, step_index in enumerate(schedule_indices):
@@ -73,5 +84,5 @@ class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV11):
                 dynamic_mask = self.__get_dynamic_mask(mask, i, len(schedule_indices))
                 latents = (background * (1 - dynamic_mask)) + (latents * dynamic_mask)
         finally:
-            self._remove_masked_attention()
+            self.unet = Injector.remove(self.unet)
         return latents

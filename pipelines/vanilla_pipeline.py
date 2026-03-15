@@ -6,6 +6,7 @@ from tqdm import tqdm
 from utils import torch_utils as utils
 from utils.globals import SD2_BASE
 import cv2 as cv
+from pipelines.vae_prepare import VaeConverter
 
 
 class InpaintPipelineVanilla(InpaintingPipeLineScheme):
@@ -34,18 +35,16 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         uncond_embeddings = encoder(uncond_input.input_ids.to(self.device))[0]
         return torch.cat([uncond_embeddings, text_embeddings])
 
+    @torch.no_grad()
     def prepare_latents(self, image: Image.Image):
         """
         Prepare the latent variables for the inpainting process.
         :param image: The image to prepare the latents for
         :return: The prepared latents
-        (This function was implemented with the help of AI)
         """
-        image_np = np.array(image).astype(np.float32) / 127.5 - 1.0
-        image_tensor = torch.from_numpy(image_np).permute(2, 0, 1).unsqueeze(0).to(self.device)
-        with torch.no_grad():
-            init_latents = self.vae.encode(image_tensor).latent_dist.sample()
-            init_latents = self.vae.config.scaling_factor * init_latents
+        image_tensor = VaeConverter.pil_to_tensor(image, self.device)
+        init_latents = self.vae.encode(image_tensor).latent_dist.sample()
+        init_latents = self.vae.config.scaling_factor * init_latents
         return init_latents
 
     def prepare_mask_tensor(self, mask_image: Image.Image):
@@ -61,21 +60,16 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         mask_tensor = torch.nn.functional.interpolate(mask_tensor, size=(latent_height, latent_width), mode='nearest')
         return mask_tensor
 
+    @torch.no_grad()
     def decode_latents(self, latents) -> Image.Image:
         """
         Decode the latents into an image using the VAE.
         :param latents: The latents to decode.
         :return: The decoded image
-        (This function was implemented with the help of AI)
         """
-        with torch.no_grad():
-            latents = latents / self.vae.config.scaling_factor
-            image = self.vae.decode(latents).sample
-
-        image = (image / 2 + 0.5).clamp(0, 1)
-        image = image.cpu().permute(0, 2, 3, 1).numpy()[0]
-        image = (image * 255).round().astype("uint8")
-        return Image.fromarray(image)
+        latents = latents / self.vae.config.scaling_factor
+        image = self.vae.decode(latents).sample
+        return VaeConverter.tensor_to_pil(image)
 
     @torch.no_grad()
     def __initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps: int):

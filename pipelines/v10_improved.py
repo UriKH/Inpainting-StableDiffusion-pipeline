@@ -1,6 +1,7 @@
 from pipelines.v9_improved import ImprovedInpaintPipelineV9
 import torch
 import math
+from pipelines.injector import Injector
 
 
 class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
@@ -130,7 +131,17 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
         _, _, latent_h, latent_w = init_latents.shape
 
         soft_attn_mask = self.__create_soft_mask(mask)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask, mask if not self.use_sm_in_sa else soft_attn_mask)
+        self.unet = Injector.inject(
+            unet=self.unet,
+            latent_h=latent_h,
+            latent_w=latent_w,
+            self_mask=mask if not self.use_sm_in_sa else soft_attn_mask,
+            cross_mask=soft_attn_mask,
+            ignore_cross_attention=self.ignore_cross_attention,
+            ca_resize_mode=self.ca_resize_mode,
+            sa_resize_mode=self.sa_resize_mode,
+            sa_dilation_threshold=self.sa_dilation_threshold
+        )
         
         try:
             for i, step_index in enumerate(schedule_indices):
@@ -151,5 +162,5 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
 
                 latents = (background * (1 - mask)) + (latents * mask)
         finally:
-            self._remove_masked_attention()
+            self.unet = Injector.remove(self.unet)
         return latents

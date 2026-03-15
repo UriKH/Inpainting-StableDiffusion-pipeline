@@ -3,6 +3,7 @@ import torch
 from PIL import Image
 import torchvision.transforms.functional as TF
 import torch.nn.functional as F
+from pipelines.injector import Injector
 
 
 class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):
@@ -35,7 +36,17 @@ class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):
         _, _, latent_h, latent_w = init_latents.shape
 
         soft_attn_mask = self.__create_soft_mask(mask)
-        self._inject_masked_attention(latent_h, latent_w, soft_attn_mask)
+        self.unet = Injector.inject(
+            unet=self.unet,
+            latent_h=latent_h,
+            latent_w=latent_w,
+            self_mask=None,
+            cross_mask=soft_attn_mask,
+            ignore_cross_attention=self.ignore_cross_attention,
+            ca_resize_mode=self.ca_resize_mode,
+            sa_resize_mode=None,
+            sa_dilation_threshold=None
+        )
 
         try:
             for i, t in enumerate(timesteps):
@@ -49,5 +60,5 @@ class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):
                     background = init_latents
                 latents = (background * (1 - mask)) + (latents * mask)
         finally:
-            self._remove_masked_attention()
+            self.unet = Injector.remove(self.unet)
         return latents
