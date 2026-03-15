@@ -42,7 +42,7 @@ class OurDatasetGenerator:
             prompts = {int(k): v for k, v in prompts.items()}
 
         f_names = os.listdir(instance_dir)
-        img_filename_to_id = {name: int(name.split('.')[0]) for name in f_names}
+        img_filename_to_id = {name: int(name.split('.')[0]) for name in f_names if name.lower().endswith(('.png', '.jpg', '.jpeg'))}
         return img_filename_to_id, prompts
 
     def generate(self, input_path: str, output_dir: str, pipeline: InpaintingPipeLineScheme) -> None:
