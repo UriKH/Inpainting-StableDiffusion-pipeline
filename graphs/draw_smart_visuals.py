@@ -81,9 +81,74 @@ def create_heatmap(df):
     print("Saved metrics_heatmap.png")
 
 
+# def create_radar_chart(df, selected_folders=None):
+#     """Creates a radar chart for comparing specific pipelines."""
+#     # If no specific folders are provided, use all of them
+#     if selected_folders:
+#         df = df[df['Folder'].isin(selected_folders)]
+#
+#     pivot_df = df.pivot(index='Folder', columns='Metric', values='Score')
+#     metrics = list(pivot_df.columns)
+#     num_vars = len(metrics)
+#
+#     norm_df = pivot_df.copy()
+#     axis_labels = []  # List to hold our new, detailed axis titles
+#
+#     # Normalize data and generate detailed labels simultaneously
+#     for metric in metrics:
+#         # Check directionality from your metrics.py file
+#         higher_is_better = COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST.get(metric, True)
+#         min_val = pivot_df[metric].min()
+#         max_val = pivot_df[metric].max()
+#
+#         if max_val == min_val:
+#             norm_df[metric] = 1.0
+#             worst_val, best_val = min_val, max_val
+#         elif higher_is_better:
+#             norm_df[metric] = (pivot_df[metric] - min_val) / (max_val - min_val)
+#             worst_val, best_val = min_val, max_val  # Higher is best
+#         else:
+#             norm_df[metric] = (max_val - pivot_df[metric]) / (max_val - min_val)
+#             worst_val, best_val = max_val, min_val  # Lower is best
+#
+#         # Format the label to include the raw bounds
+#         # Using .3g for clean formatting of both large numbers and small decimals
+#         label = f"{metric}\n({worst_val:.3g} - {best_val:.3g})"
+#         axis_labels.append(label)
+#
+#     # Compute angle of each axis
+#     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
+#     angles += angles[:1]  # Close the loop
+#
+#     # Slightly larger figure to accommodate multi-line text
+#     fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
+#
+#     # Draw one axe per variable and add the NEW labels
+#     plt.xticks(angles[:-1], axis_labels, size=11, fontweight='medium')
+#
+#     # Remove radial labels (0.2, 0.4, etc.) to keep it clean
+#     ax.set_yticklabels([])
+#
+#     # Color palette
+#     colors = sns.color_palette("husl", len(norm_df.index))
+#
+#     # Plot each pipeline
+#     for idx, (folder_name, row) in enumerate(norm_df.iterrows()):
+#         values = row.values.flatten().tolist()
+#         values += values[:1]  # Close the loop
+#
+#         ax.plot(angles, values, linewidth=2, linestyle='solid', label=folder_name, color=colors[idx])
+#         ax.fill(angles, values, color=colors[idx], alpha=0.2)
+#
+#     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), fontsize=12, ncol=2)
+#
+#     # Increased pad and added bbox_inches to ensure text isn't cut off
+#     plt.tight_layout(pad=4.0)
+#     plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
+#     print("Saved experiment_radar_chart.png")
+
 def create_radar_chart(df, selected_folders=None):
     """Creates a radar chart for comparing specific pipelines."""
-    # If no specific folders are provided, use all of them
     if selected_folders:
         df = df[df['Folder'].isin(selected_folders)]
 
@@ -92,11 +157,12 @@ def create_radar_chart(df, selected_folders=None):
     num_vars = len(metrics)
 
     norm_df = pivot_df.copy()
-    axis_labels = []  # List to hold our new, detailed axis titles
+    axis_labels = []
 
-    # Normalize data and generate detailed labels simultaneously
+    # --- NEW: List to hold the text for our bounds box ---
+    metric_bounds_info = []
+
     for metric in metrics:
-        # Check directionality from your metrics.py file
         higher_is_better = COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST.get(metric, True)
         min_val = pivot_df[metric].min()
         max_val = pivot_df[metric].max()
@@ -106,44 +172,47 @@ def create_radar_chart(df, selected_folders=None):
             worst_val, best_val = min_val, max_val
         elif higher_is_better:
             norm_df[metric] = (pivot_df[metric] - min_val) / (max_val - min_val)
-            worst_val, best_val = min_val, max_val  # Higher is best
+            worst_val, best_val = min_val, max_val
         else:
             norm_df[metric] = (max_val - pivot_df[metric]) / (max_val - min_val)
-            worst_val, best_val = max_val, min_val  # Lower is best
+            worst_val, best_val = max_val, min_val
 
-        # Format the label to include the raw bounds
-        # Using .3g for clean formatting of both large numbers and small decimals
-        label = f"{metric}\n(Worst: {worst_val:.3g} - Best: {best_val:.3g})"
-        axis_labels.append(label)
+            # --- CHANGED: Keep axis labels clean, move bounds to the new list ---
+        axis_labels.append(metric)
+        metric_bounds_info.append(f"{metric}: Worst {worst_val:.3g} | Best {best_val:.3g}")
 
-    # Compute angle of each axis
     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
-    angles += angles[:1]  # Close the loop
+    angles += angles[:1]
 
-    # Slightly larger figure to accommodate multi-line text
     fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
 
-    # Draw one axe per variable and add the NEW labels
     plt.xticks(angles[:-1], axis_labels, size=11, fontweight='medium')
-
-    # Remove radial labels (0.2, 0.4, etc.) to keep it clean
     ax.set_yticklabels([])
 
-    # Color palette
     colors = sns.color_palette("husl", len(norm_df.index))
 
-    # Plot each pipeline
     for idx, (folder_name, row) in enumerate(norm_df.iterrows()):
         values = row.values.flatten().tolist()
-        values += values[:1]  # Close the loop
+        values += values[:1]
 
         ax.plot(angles, values, linewidth=2, linestyle='solid', label=folder_name, color=colors[idx])
         ax.fill(angles, values, color=colors[idx], alpha=0.2)
 
-    plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), fontsize=12)
+    # --- CHANGED: Main Pipeline Legend ---
+    plt.legend(title="Pipelines", loc='upper right', bbox_to_anchor=(1.35, 1.1), fontsize=11)
 
-    # Increased pad and added bbox_inches to ensure text isn't cut off
-    plt.tight_layout(pad=4.0)
+    # --- NEW: Create the Metric Bounds Text Box ---
+    bounds_text = "Metric Bounds\n" + "-" * 20 + "\n" + "\n".join(metric_bounds_info)
+    plt.gcf().text(
+        0.95, 0.45,  # X and Y coordinates relative to the figure
+        bounds_text,
+        fontsize=10,
+        verticalalignment='center',
+        bbox=dict(boxstyle="round,pad=0.5", facecolor="white", edgecolor="lightgray", alpha=0.9)
+    )
+
+    # Increased pad slightly more to ensure the new text box fits perfectly
+    plt.tight_layout(pad=5.0)
     plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
     print("Saved experiment_radar_chart.png")
 
