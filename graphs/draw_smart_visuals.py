@@ -291,6 +291,100 @@ def create_heatmap(df):
 #
 #
 
+# def create_radar_chart(df, selected_folders=None):
+#     """Creates a radar chart for comparing specific pipelines."""
+#     if selected_folders:
+#         df = df[df['Folder'].isin(selected_folders)]
+#
+#     pivot_df = df.pivot(index='Folder', columns='Metric', values='Score')
+#     metrics = list(pivot_df.columns)
+#     num_vars = len(metrics)
+#
+#     norm_df = pivot_df.copy()
+#     axis_labels = []
+#     bounds_info = []
+#
+#     for metric in metrics:
+#         higher_is_better = COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST.get(metric, True)
+#         min_val = pivot_df[metric].min()
+#         max_val = pivot_df[metric].max()
+#
+#         if max_val == min_val:
+#             norm_df[metric] = 1.0
+#             worst_val, best_val = min_val, max_val
+#         elif higher_is_better:
+#             norm_df[metric] = (pivot_df[metric] - min_val) / (max_val - min_val)
+#             worst_val, best_val = min_val, max_val
+#         else:
+#             norm_df[metric] = (max_val - pivot_df[metric]) / (max_val - min_val)
+#             worst_val, best_val = max_val, min_val
+#
+#         axis_labels.append(metric)
+#         bounds_info.append(f"{metric}: {worst_val:.3g} to {best_val:.3g}")
+#
+#     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
+#     angles += angles[:1]
+#
+#     fig, ax = plt.subplots(figsize=(16, 7), subplot_kw=dict(polar=True))
+#
+#     plt.xticks(angles[:-1], axis_labels, size=11, fontweight='medium')
+#
+#     # --- NEW: Dynamically align labels based on their angle ---
+#     # This ensures the text pushes *away* from the circle evenly
+#     for label, angle in zip(ax.get_xticklabels(), angles[:-1]):
+#         if angle == 0:
+#             label.set_horizontalalignment('left')
+#             label.set_verticalalignment('center')
+#         elif 0 < angle < pi / 2:
+#             label.set_horizontalalignment('left')
+#             label.set_verticalalignment('bottom')
+#         elif angle == pi / 2:
+#             label.set_horizontalalignment('center')
+#             label.set_verticalalignment('bottom')
+#         elif pi / 2 < angle < pi:
+#             label.set_horizontalalignment('right')
+#             label.set_verticalalignment('bottom')
+#         elif angle == pi:
+#             label.set_horizontalalignment('right')
+#             label.set_verticalalignment('center')
+#         elif pi < angle < 3 * pi / 2:
+#             label.set_horizontalalignment('right')
+#             label.set_verticalalignment('top')
+#         elif angle == 3 * pi / 2:
+#             label.set_horizontalalignment('center')
+#             label.set_verticalalignment('top')
+#         else:
+#             label.set_horizontalalignment('left')
+#             label.set_verticalalignment('top')
+#
+#     # Revert pad to a smaller, uniform value now that alignments are fixed
+#     ax.tick_params(axis='x', pad=10)
+#
+#     ax.set_yticklabels([])
+#     ax.set_ylim(0, 1.0)
+#
+#     colors = sns.color_palette("husl", len(norm_df.index))
+#
+#     for idx, (folder_name, row) in enumerate(norm_df.iterrows()):
+#         values = row.values.flatten().tolist()
+#         values += values[:1]
+#
+#         ax.plot(angles, values, linewidth=2, linestyle='solid', label=folder_name, color=colors[idx])
+#         ax.fill(angles, values, color=colors[idx], alpha=0.2)
+#
+#     plt.legend(title="Pipelines", loc='lower left', bbox_to_anchor=(1.15, 0.52), fontsize=11)
+#
+#     bounds_text = "Metric Bounds (Worst \u2192 Best)\n" + "-" * 35 + "\n" + "\n".join(bounds_info)
+#     ax.text(1.15, 0.48, bounds_text, transform=ax.transAxes, fontsize=11,
+#             verticalalignment='top', horizontalalignment='left',
+#             bbox=dict(boxstyle="round,pad=0.6", facecolor="white", edgecolor="lightgray", alpha=0.9))
+#
+#     plt.subplots_adjust(left=0.05, right=0.6)
+#
+#     plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
+#     print("Saved experiment_radar_chart.png")
+
+
 def create_radar_chart(df, selected_folders=None):
     """Creates a radar chart for comparing specific pipelines."""
     if selected_folders:
@@ -304,6 +398,8 @@ def create_radar_chart(df, selected_folders=None):
     axis_labels = []
     bounds_info = []
 
+    max_metric_len = max(len(m) for m in metrics)
+    
     for metric in metrics:
         higher_is_better = COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST.get(metric, True)
         min_val = pivot_df[metric].min()
@@ -320,17 +416,20 @@ def create_radar_chart(df, selected_folders=None):
             worst_val, best_val = max_val, min_val
 
         axis_labels.append(metric)
-        bounds_info.append(f"{metric}: {worst_val:.3g} to {best_val:.3g}")
+        # Using a newline (\n) in the bounds text box for cleaner stacking
+        # bounds_info.append(f"{metric}:\nWorst: {worst_val:.3g} | Best: {best_val:.3g}")
+        bounds_info.append(f"{metric:<{max_metric_len}} | {worst_val:<6.3g} to {best_val:<6.3g}")
 
     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
     angles += angles[:1]
 
-    fig, ax = plt.subplots(figsize=(16, 7), subplot_kw=dict(polar=True))
+    # --- CHANGED: Wider and slightly wider figure (18x7) ---
+    fig, ax = plt.subplots(figsize=(18, 7), subplot_kw=dict(polar=True))
 
     plt.xticks(angles[:-1], axis_labels, size=11, fontweight='medium')
 
-    # --- NEW: Dynamically align labels based on their angle ---
-    # This ensures the text pushes *away* from the circle evenly
+
+    # --- Dynamically align labels based on their angle ---
     for label, angle in zip(ax.get_xticklabels(), angles[:-1]):
         if angle == 0:
             label.set_horizontalalignment('left')
@@ -357,7 +456,7 @@ def create_radar_chart(df, selected_folders=None):
             label.set_horizontalalignment('left')
             label.set_verticalalignment('top')
 
-    # Revert pad to a smaller, uniform value now that alignments are fixed
+    # Uniform pad with dynamic alignment
     ax.tick_params(axis='x', pad=10)
 
     ax.set_yticklabels([])
@@ -372,14 +471,22 @@ def create_radar_chart(df, selected_folders=None):
         ax.plot(angles, values, linewidth=2, linestyle='solid', label=folder_name, color=colors[idx])
         ax.fill(angles, values, color=colors[idx], alpha=0.2)
 
-    plt.legend(title="Pipelines", loc='lower left', bbox_to_anchor=(1.15, 0.52), fontsize=11)
+    # --- Legend & Text Panels ---
 
-    bounds_text = "Metric Bounds (Worst \u2192 Best)\n" + "-" * 35 + "\n" + "\n".join(bounds_info)
-    ax.text(1.15, 0.48, bounds_text, transform=ax.transAxes, fontsize=11,
+    # 1. Legend: Anchor the *bottom-left* corner to X=1.2, Y=0.52 (slightly higher coordinate)
+    plt.legend(title="Pipelines", loc='lower left', bbox_to_anchor=(1.2, 0.52), fontsize=11)
+
+    # 2. Text Box: Anchor the *top-left* corner to X=1.2, Y=0.48 (slightly lower coordinate)
+    # Added newlines in the string formatting earlier in bounds_info list for multi-line display
+    bounds_text = "Metric Bounds\n" + "-" * 40 + "\n" + "\n\n".join(bounds_info)
+    ax.text(1.2, 0.48, bounds_text, transform=ax.transAxes, fontsize=10,
+            family='monospace',
             verticalalignment='top', horizontalalignment='left',
             bbox=dict(boxstyle="round,pad=0.6", facecolor="white", edgecolor="lightgray", alpha=0.9))
 
-    plt.subplots_adjust(left=0.05, right=0.6)
+    # --- CHANGED: Physically force the radar chart to only occupy the left 55% of the image ---
+    # Dedicates the other 45% of the wide canvas entirely to the panels on the right
+    plt.subplots_adjust(left=0.05, right=0.55)
 
     plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
     print("Saved experiment_radar_chart.png")
