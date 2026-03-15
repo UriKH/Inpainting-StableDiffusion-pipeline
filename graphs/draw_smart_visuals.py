@@ -149,6 +149,7 @@ def create_heatmap(df):
 
 def create_radar_chart(df, selected_folders=None):
     """Creates a radar chart for comparing specific pipelines."""
+    # If no specific folders are provided, use all of them
     if selected_folders:
         df = df[df['Folder'].isin(selected_folders)]
 
@@ -158,10 +159,9 @@ def create_radar_chart(df, selected_folders=None):
 
     norm_df = pivot_df.copy()
     axis_labels = []
+    bounds_info = []  # NEW: List to hold the worst-best text
 
-    # --- NEW: List to hold the text for our bounds box ---
-    metric_bounds_info = []
-
+    # Normalize data and generate detailed labels simultaneously
     for metric in metrics:
         higher_is_better = COCOInpaintingMetricsScorer.METRIC_BEST_HIGHEST.get(metric, True)
         min_val = pivot_df[metric].min()
@@ -177,14 +177,15 @@ def create_radar_chart(df, selected_folders=None):
             norm_df[metric] = (max_val - pivot_df[metric]) / (max_val - min_val)
             worst_val, best_val = max_val, min_val
 
-            # --- CHANGED: Keep axis labels clean, move bounds to the new list ---
+            # NEW: Clean axis label, separated bounds info
         axis_labels.append(metric)
-        metric_bounds_info.append(f"{metric}: Worst {worst_val:.3g} | Best {best_val:.3g}")
+        bounds_info.append(f"{metric}: {worst_val:.3g} to {best_val:.3g}")
 
     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
     angles += angles[:1]
 
-    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
+    # CHANGED: Much wider figure (14x8) to create empty space on the right
+    fig, ax = plt.subplots(figsize=(14, 8), subplot_kw=dict(polar=True))
 
     plt.xticks(angles[:-1], axis_labels, size=11, fontweight='medium')
     ax.set_yticklabels([])
@@ -198,23 +199,25 @@ def create_radar_chart(df, selected_folders=None):
         ax.plot(angles, values, linewidth=2, linestyle='solid', label=folder_name, color=colors[idx])
         ax.fill(angles, values, color=colors[idx], alpha=0.2)
 
-    # --- CHANGED: Main Pipeline Legend ---
-    plt.legend(title="Pipelines", loc='upper right', bbox_to_anchor=(1.35, 1.1), fontsize=11)
+    # 1. Main Pipeline Legend Top-Right
+    # loc='upper left' anchors the top-left corner of the legend box to the coordinates provided
+    plt.legend(title="Pipelines", loc='upper left', bbox_to_anchor=(1.15, 1.05), fontsize=11)
 
-    # --- NEW: Create the Metric Bounds Text Box ---
-    bounds_text = "Metric Bounds\n" + "-" * 20 + "\n" + "\n".join(metric_bounds_info)
-    plt.gcf().text(
-        0.95, 0.45,  # X and Y coordinates relative to the figure
-        bounds_text,
-        fontsize=10,
-        verticalalignment='center',
-        bbox=dict(boxstyle="round,pad=0.5", facecolor="white", edgecolor="lightgray", alpha=0.9)
-    )
+    # 2. Metric Bounds Text Box Below Legend
+    bounds_text = "Metric Bounds (Worst \u2192 Best)\n" + "-" * 35 + "\n" + "\n".join(bounds_info)
 
-    # Increased pad slightly more to ensure the new text box fits perfectly
-    plt.tight_layout(pad=5.0)
+    # transform=ax.transAxes treats 0,0 as bottom-left of chart and 1,1 as top-right.
+    # X=1.15 aligns it with the legend above. Y=0.6 pushes it slightly down.
+    ax.text(1.15, 0.6, bounds_text, transform=ax.transAxes, fontsize=11,
+            verticalalignment='top',
+            bbox=dict(boxstyle="round,pad=0.6", facecolor="white", edgecolor="lightgray", alpha=0.9))
+
+    # CHANGED: Physically force the radar chart to only occupy the left 60% of the image
+    plt.subplots_adjust(left=0.05, right=0.6)
+
     plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
     print("Saved experiment_radar_chart.png")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate Heatmap and Radar charts from JSON metric files.")
