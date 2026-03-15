@@ -72,7 +72,6 @@ class MaskGenerator:
         max_radius = self.max_radius * d
 
         rng = np.random.default_rng(int(image_id))
-
         mask = np.zeros((height, width), dtype=np.uint8)
 
         # generate random lines
@@ -91,9 +90,9 @@ class MaskGenerator:
                     # no lines in 10 degrees from the original line
                     if 2 * math.pi - math.pi / 18 < angle < 2 * math.pi + math.pi / 18:
                         continue
+
                     x1 = int(x0 + length * math.cos(angle))
                     y1 = int(y0 + length * math.sin(angle))
-                    # prevent lines from going outside the image
                     if 0 <= x1 <= width and 0 <= y1 <= height:
                         break
 

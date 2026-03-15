@@ -15,8 +15,10 @@ def clear_cache() -> None:
 def generate_perlin_noise_2d(shape, res, device):
     """
     Generates true Gradient Noise (Perlin) for organic blob structures.
-    shape: (B, C, H, W)
-    res: (res_h, res_w) - the number of Perlin grid cells (defines blob size)
+    :param shape: (B, C, H, W)
+    :param res: (res_h, res_w) - the number of Perlin grid cells (defines blob size)
+    :param device: torch.device
+    (AI implemented This function)
     """
     B, C, H, W = shape
     res_h, res_w = res

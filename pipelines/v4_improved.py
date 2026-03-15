@@ -18,18 +18,20 @@ class ImprovedInpaintPipelineV4(InpaintPipelineVanilla):
         :return: The filled image.
         (This idea was inspired by a conversation with AI)
         """
-        real_arr = np.array(real_image).astype(np.float32)
         mask_arr = np.array(mask_image)
         mask_bool = mask_arr == 255
-
         if not np.any(mask_bool):
             return real_image
 
+        real_arr = np.array(real_image).astype(np.float32)
         filled_arr = real_arr.copy()
         filled_arr[mask_bool] = np.mean(real_arr[~mask_bool], axis=0)
-        kernel = np.array([[0.0,  0.25, 0.0],
-                           [0.25, 0.0,  0.25],
-                           [0.0,  0.25, 0.0]], dtype=np.float32)
+        kernel = np.array(
+            [[0.0,  0.25, 0.0],
+            [0.25, 0.0,  0.25],
+            [0.0,  0.25, 0.0]],
+            dtype=np.float32
+        )
         
         max_iters = 1000
         tolerance = 0.05

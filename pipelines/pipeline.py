@@ -82,8 +82,8 @@ class InpaintingPipeLineScheme(ABC):
         """
         width, height = init_image.size
         scale = target_size / max(width, height)
-        new_w, new_h = int(width * scale), int(height * scale)
-
+        new_w = int(width * scale)
+        new_h = int(height * scale)
         img_resized = init_image.resize((new_w, new_h), Image.LANCZOS)
         mask_resized = mask_image.resize((new_w, new_h), Image.NEAREST)
 
@@ -114,11 +114,11 @@ class InpaintingPipeLineScheme(ABC):
         """
         orig_width, orig_height = original_size
         scale = target_size / max(orig_width, orig_height)
-        new_w, new_h = int(orig_width * scale), int(orig_height * scale)
-
+        new_w = int(orig_width * scale)
+        new_h = int(orig_height * scale)
         pad_w = target_size - new_w
-        pad_h = target_size - new_h
         pad_left = pad_w // 2
+        pad_h = target_size - new_h
         pad_top = pad_h // 2
 
         cropped_image = generated_image.crop((pad_left, pad_top, pad_left + new_w, pad_top + new_h))

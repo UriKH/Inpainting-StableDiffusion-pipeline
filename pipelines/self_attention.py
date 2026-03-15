@@ -5,6 +5,11 @@ import torch
 
 
 class MaskedSelfAttnProcessor:
+    """
+    Masked self-Attention Processor.
+    (This class was implemented mostly by AI)
+    """
+
     def __init__(self, latent_h, latent_w):
         self.latent_h = latent_h
         self.latent_w = latent_w

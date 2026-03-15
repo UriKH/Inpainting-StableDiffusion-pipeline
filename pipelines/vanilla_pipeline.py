@@ -4,15 +4,16 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 from utils import torch_utils as utils
+from utils.globals import SD2_BASE
 import cv2 as cv
 
 
 class InpaintPipelineVanilla(InpaintingPipeLineScheme):
-    MODEL_ID = "Manojb/stable-diffusion-2-base"
+    MODEL_ID = SD2_BASE
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     CFG_SCALE_FACTOR = 7.5
 
-    def __init__(self, model_id=MODEL_ID, device=DEVICE, **kwargs):
+    def __init__(self, model_id: str = MODEL_ID, device: str = DEVICE, **kwargs):
         super().__init__(model_id, device, **kwargs)
 
     def encode_prompt(self, prompt: str, text_encoder, tokenizer):
@@ -76,7 +77,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         return Image.fromarray(image)
 
     @torch.no_grad()
-    def _initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps: int):
+    def __initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps: int):
         """
         Initialize the denoising loop.
         :param init_latents: The initial latents.
@@ -98,6 +99,22 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         return latents, timesteps
 
     @torch.no_grad()
+    def __denoise_step(self, t, text_embeddings, latents):
+        """
+        Preform scaling, a single denoising step and guidance.
+        :param t: The current timestep.
+        :param text_embeddings: The text embeddings.
+        :param latents: The current latents.
+        """
+        latent_model_input = torch.cat([latents] * 2)
+        latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+        noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
+        noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+        noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
+        latents = self.scheduler.step(noise_pred, t, latents).prev_sample
+        return latents
+
+    @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps: int = 50):
         """
         Denoise the initial latents using the UNet - generate the masked area DDPM style.
@@ -107,17 +124,10 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         :param num_inference_steps: The number of inference steps.
         :return: The denoised latents.
         """
-        latents, timesteps = self._initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
 
         for i, t in enumerate(timesteps):
-            latent_model_input = torch.cat([latents] * 2)
-            latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-
-            # predict noise
-            noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
-            noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-            noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)  # preform guidance
-            latents = self.scheduler.step(noise_pred, t, latents).prev_sample
+            latents = self.__denoise_step(t, text_embeddings, latents)
 
             # add noise to latents only if not finished after this step
             if i < len(timesteps) - 1:

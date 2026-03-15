@@ -37,7 +37,7 @@ class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        latents, timesteps = self._initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
 
         soft_attn_mask = self._create_soft_mask(mask_tensor)
@@ -45,13 +45,7 @@ class ImprovedInpaintPipelineV9(ImprovedInpaintPipelineV8):
         
         try:
             for i, t in enumerate(timesteps):
-                latent_model_input = torch.cat([latents] * 2)
-                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-
-                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
-                noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
-                latents = self.scheduler.step(noise_pred, t, latents).prev_sample
+                latents = self.__denoise_step(t, text_embeddings, latents)
 
                 if i < len(timesteps) - 1:
                     t_next = timesteps[i + 1]

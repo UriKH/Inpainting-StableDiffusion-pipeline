@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 
-def seed_everything(seed: int = 42):
+def set_seed(seed: int = 42):
     """
     Locks the random seed for all mathematical operations to guarantee reproducibility across runs.
     :param seed: The seed value to use for all random number generators.

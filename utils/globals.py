@@ -12,6 +12,7 @@ EVAL_IMAGES_PATH = os.path.join(COCO_PATH, 'evaluation')
 VALIDATION_IMAGES_PATH = os.path.join(COCO_PATH, 'validation')
 OUR_DATASET_PATH = os.path.join(DATA_PATH, 'our_dataset')
 OUR_DATASET_CAPTIONS_PATH = os.path.join(OUR_DATASET_PATH, 'captions.json')
+SD2_BASE = "sd2-community/stable-diffusion-2-base"
 
 TO_COVERAGE_RATIO = {i: f'{i}-{i + 10}' for i in range(0, 91, 10)}
 FROM_COVERAGE_RATIO = {f'{i}-{i + 10}': i for i in range(0, 91, 10)}

@@ -70,7 +70,13 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
         return schedule_indices
 
     @torch.no_grad()
-    def _initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps):
+    def __initialize_denoise_loop(self, init_latents, mask_tensor, num_inference_steps):
+        """
+        Initialize the denoising loop, suitable for both the RePaint and dynamic schedules.
+        :param init_latents: The initial latents.
+        :param mask_tensor: The mask tensor.
+        :param num_inference_steps: The number of inference steps.
+        """
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
         noise = torch.randn_like(init_latents)
 
@@ -91,9 +97,30 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
                         * (1 - mask_tensor)) + (noise * mask_tensor))
         return latents, timesteps, schedule_indices
 
+    def __resampling_latent_update(self, latents, t_next, step_index, timesteps):
+        """
+        Preforms time jump noise calculation and update the latents accordingly
+        :param latents: The current latents.
+        :param t_next: The timestep to jump to.
+        :param step_index: The current step index.
+        :param timesteps: The timesteps.
+        """
+        if step_index + 1 < len(timesteps):
+            t_prev = timesteps[step_index + 1]
+            alpha_prod_prev = self.scheduler.alphas_cumprod[t_prev].to(self.device)
+        else:
+            alpha_prod_prev = torch.tensor(1.0, device=self.device)
+
+        # compute and add the matching noise to the jumped-back latents
+        alpha_prod_target = self.scheduler.alphas_cumprod[t_next].to(self.device)
+        ratio = alpha_prod_target / alpha_prod_prev
+        noise = torch.randn_like(latents)
+        latents = torch.sqrt(ratio) * latents + torch.sqrt(1 - ratio) * noise
+        return latents
+
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        latents, timesteps, schedule_indices = self._initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+        latents, timesteps, schedule_indices = self.__initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
 
         soft_attn_mask = self._create_soft_mask(mask_tensor)
@@ -102,34 +129,21 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
         try:
             for idx, step_index in enumerate(schedule_indices):
                 t = timesteps[step_index]
-                latent_model_input = torch.cat([latents] * 2)
-                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-    
-                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
-                noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
-                latents = self.scheduler.step(noise_pred, t, latents).prev_sample
+                latents = self.__denoise_step(t, text_embeddings, latents)
 
+                # add noise until end of sequence
                 if idx != len(schedule_indices) - 1:
-                    next_step_index = schedule_indices[idx + 1]
-                    t_next = timesteps[next_step_index]
-                
-                    if next_step_index < step_index:
-                        if step_index + 1 < len(timesteps):
-                            t_prev = timesteps[step_index + 1]
-                            alpha_prod_prev = self.scheduler.alphas_cumprod[t_prev].to(self.device)
-                        else:
-                            alpha_prod_prev = torch.tensor(1.0, device=self.device)
-                            
-                        alpha_prod_target = self.scheduler.alphas_cumprod[t_next].to(self.device)
-                        ratio = alpha_prod_target / alpha_prod_prev
-                        noise = torch.randn_like(latents)
-                        latents = torch.sqrt(ratio) * latents + torch.sqrt(1 - ratio) * noise
-                    
+                    scheduler_next_step = schedule_indices[idx + 1]
+                    t_next = timesteps[scheduler_next_step]
+
+                    if scheduler_next_step < step_index:        # jump back in time
+                        latents = self.__resampling_latent_update(latents, t_next, step_index, timesteps)
+
                     background_noise = torch.randn_like(init_latents)
                     known_background = self.scheduler.add_noise(init_latents, background_noise, t_next)
                 else:
                     known_background = init_latents
+
                 latents = (known_background * (1 - mask_tensor)) + (latents * mask_tensor)
         finally:
             self._remove_masked_attention()

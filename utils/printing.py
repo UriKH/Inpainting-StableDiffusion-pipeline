@@ -1,4 +1,9 @@
 def print_title(msg, n=100):
+    """
+    Prints a title with a centered message.
+    :param msg: The message to print.
+    :param n: The buffer size.
+    """
     print()
     n = (n // 2) * 2
     print((n // 2) * "===")

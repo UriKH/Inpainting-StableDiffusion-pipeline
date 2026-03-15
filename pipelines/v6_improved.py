@@ -17,7 +17,7 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
     def _inject_masked_attention(self, latent_h, latent_w, mask_tensor):
         """
         Replaces standard cross-attention with the Masked processor.
-        (This function was implemented with the help of AI)
+        (This function was implemented with the assistance of AI)
         """
         processor_dict = {}
         for name in self.unet.attn_processors.keys():
@@ -33,7 +33,7 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
     def _remove_masked_attention(self):
         """
         Restores the UNet to its vanilla state to prevent side effects.
-        (This function was implemented with the help of AI)
+        (This function was implemented with the assistance of AI)
         """
         processor_dict = {
             name: AttnProcessor2_0() for name in self.unet.attn_processors.keys()
@@ -41,20 +41,14 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
         self.unet.set_attn_processor(processor_dict)
 
     @torch.no_grad()
-    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        latents, timesteps = self._initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+    def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps: int = 50):
+        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
         self._inject_masked_attention(latent_h, latent_w, mask_tensor)
 
         try:
             for i, t in enumerate(timesteps):
-                latent_model_input = torch.cat([latents] * 2)
-                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-
-                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
-                noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
-                latents = self.scheduler.step(noise_pred, t, latents).prev_sample
+                latents = self.__denoise_step(t, text_embeddings, latents)
 
                 if i < len(timesteps) - 1:
                     t_next = timesteps[i + 1]

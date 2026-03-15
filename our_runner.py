@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pipelines.pipeline import InpaintPipelineInput, InpaintingPipeLineScheme
 from mask_generator import MaskGenerator
 from utils.globals import MASKING_CONFIGS
-from utils.seed import seed_everything
+from utils.seed import set_seed
 
 base_seed = 42
 
@@ -65,7 +65,7 @@ class OurDatasetGenerator:
                 print(f'unexpected error: {e} (continue anyway!)')
                 continue
 
-            seed_everything(base_seed + img_id)
+            set_seed(base_seed + img_id)
             mask_image, coverage_ratio = self.mask_generator(np.array(init_image), img_id)
             mask_image = Image.fromarray(mask_image).convert("L")
             pipe_in = InpaintPipelineInput(prompt, init_image, mask_image)

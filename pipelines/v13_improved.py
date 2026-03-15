@@ -48,7 +48,7 @@ class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV11):
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask_tensor, num_inference_steps=50):
-        latents, timesteps, schedule_indices = self._initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
+        latents, timesteps, schedule_indices = self.__initialize_denoise_loop(init_latents, mask_tensor, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
 
         soft_attn_mask = self._create_soft_mask(mask_tensor)
@@ -57,31 +57,15 @@ class ImprovedInpaintPipelineV13(ImprovedInpaintPipelineV11):
         try:
             for idx, step_index in enumerate(schedule_indices):
                 t = timesteps[step_index]
-                latent_model_input = torch.cat([latents] * 2)
-                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-    
-                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
-                noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                noise_pred = noise_pred_uncond + self.CFG_SCALE_FACTOR * (noise_pred_text - noise_pred_uncond)
-                latents = self.scheduler.step(noise_pred, t, latents).prev_sample
+                latents = self.__denoise_step(t, text_embeddings, latents)
 
                 if idx != len(schedule_indices) - 1:
-                    next_step_index = schedule_indices[idx + 1]
-                    t_next = timesteps[next_step_index]
+                    scheduler_next_step = schedule_indices[idx + 1]
+                    t_next = timesteps[scheduler_next_step]
                 
-                    is_jump_backward = next_step_index < step_index
-                
-                    if is_jump_backward:
-                        if step_index + 1 < len(timesteps):
-                            t_prev = timesteps[step_index + 1]
-                            alpha_prod_prev = self.scheduler.alphas_cumprod[t_prev].to(self.device)
-                        else:
-                            alpha_prod_prev = torch.tensor(1.0, device=self.device)
-                            
-                        alpha_prod_target = self.scheduler.alphas_cumprod[t_next].to(self.device)
-                        ratio = alpha_prod_target / alpha_prod_prev
-                        noise = torch.randn_like(latents)
-                        latents = torch.sqrt(ratio) * latents + torch.sqrt(1 - ratio) * noise
+                    if scheduler_next_step < step_index:
+                        latents = self.__resampling_latent_update(latents, t_next, step_index, timesteps)
+
                     background_noise = torch.randn_like(init_latents)
                     known_background = self.scheduler.add_noise(init_latents, background_noise, t_next)
                 else:
