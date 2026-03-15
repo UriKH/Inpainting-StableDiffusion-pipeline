@@ -94,7 +94,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         return latents, timesteps
 
     @torch.no_grad()
-    def __denoise_step(self, t, text_embeddings, latents):
+    def _denoise_step(self, t, text_embeddings, latents):
         """
         Preform scaling, a single denoising step and guidance.
         :param t: The current timestep.
@@ -122,7 +122,7 @@ class InpaintPipelineVanilla(InpaintingPipeLineScheme):
         latents, timesteps = self._initialize_denoise_loop(init_latents, mask, num_inference_steps)
 
         for i, t in enumerate(timesteps):
-            latents = self.__denoise_step(t, text_embeddings, latents)
+            latents = self._denoise_step(t, text_embeddings, latents)
 
             # add noise to latents only if not finished after this step
             if i < len(timesteps) - 1:

@@ -15,7 +15,7 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
 
     @torch.no_grad()
     def denoise(self, text_embeddings, init_latents, mask, num_inference_steps: int = 50):
-        latents, timesteps = self.__initialize_denoise_loop(init_latents, mask, num_inference_steps)
+        latents, timesteps = self._initialize_denoise_loop(init_latents, mask, num_inference_steps)
         _, _, latent_h, latent_w = init_latents.shape
         self.unet = Injector.inject(
             unet=self.unet,
@@ -31,7 +31,7 @@ class ImprovedInpaintPipelineV6(ImprovedInpaintPipelineV5):
 
         try:
             for i, t in enumerate(timesteps):
-                latents = self.__denoise_step(t, text_embeddings, latents)
+                latents = self._denoise_step(t, text_embeddings, latents)
 
                 if i < len(timesteps) - 1:
                     t_next = timesteps[i + 1]

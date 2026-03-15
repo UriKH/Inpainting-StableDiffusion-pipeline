@@ -50,7 +50,7 @@ class ImprovedInpaintPipelineV7(ImprovedInpaintPipelineV6):
 
         try:
             for i, t in enumerate(timesteps):
-                latents = self.__denoise_step(t, text_embeddings, latents)
+                latents = self._denoise_step(t, text_embeddings, latents)
 
                 if i < len(timesteps) - 1:
                     t_next = timesteps[i + 1]

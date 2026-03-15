@@ -146,7 +146,7 @@ class ImprovedInpaintPipelineV10(ImprovedInpaintPipelineV9):
         try:
             for i, step_index in enumerate(schedule_indices):
                 t = timesteps[step_index]
-                latents = self.__denoise_step(t, text_embeddings, latents)
+                latents = self._denoise_step(t, text_embeddings, latents)
 
                 # add noise until end of sequence
                 if i != len(schedule_indices) - 1:
