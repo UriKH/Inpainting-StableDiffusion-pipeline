@@ -8,7 +8,7 @@ import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from code.pipelines.pipeline import InpaintPipelineInput, InpaintingPipeLineScheme
+from pipelines.pipeline import InpaintPipelineInput, InpaintingPipeLineScheme
 from mask_generator import MaskGenerator
 from utils.globals import MASKING_CONFIGS
 from utils.seed import set_seed
