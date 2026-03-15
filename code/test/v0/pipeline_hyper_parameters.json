@@ -33,6 +33,6 @@
     "init_noise_strength": 1.0,
     "reconstruction": false,
     "generate_ours": false,
-    "input_path": "./data/test/validation",
+    "input_path": "./data/test/validation/",
     "output_path": "./test/v0"
 }
