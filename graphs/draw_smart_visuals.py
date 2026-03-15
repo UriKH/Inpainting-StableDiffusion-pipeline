@@ -418,7 +418,7 @@ def create_radar_chart(df, selected_folders=None):
         axis_labels.append(metric)
         # Using a newline (\n) in the bounds text box for cleaner stacking
         # bounds_info.append(f"{metric}:\nWorst: {worst_val:.3g} | Best: {best_val:.3g}")
-        bounds_info.append(f"{metric:<{max_metric_len}} | {worst_val:<6.3g} to {best_val:<6.3g}")
+        bounds_info.append(f"{metric:<{max_metric_len}} {worst_val:<6.3g} to {best_val:<6.3g}")
 
     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
     angles += angles[:1]
@@ -474,19 +474,19 @@ def create_radar_chart(df, selected_folders=None):
     # --- Legend & Text Panels ---
 
     # 1. Legend: Anchor the *bottom-left* corner to X=1.2, Y=0.52 (slightly higher coordinate)
-    plt.legend(title="Pipelines", loc='lower left', bbox_to_anchor=(1.2, 0.52), fontsize=11)
+    plt.legend(title="Pipelines", loc='lower left', bbox_to_anchor=(1.25, 0.52), fontsize=11)
 
     # 2. Text Box: Anchor the *top-left* corner to X=1.2, Y=0.48 (slightly lower coordinate)
     # Added newlines in the string formatting earlier in bounds_info list for multi-line display
-    bounds_text = "Metric Bounds\n" + "-" * 40 + "\n" + "\n\n".join(bounds_info)
-    ax.text(1.2, 0.48, bounds_text, transform=ax.transAxes, fontsize=10,
+    bounds_text = "Metric Bounds\n" + "-" * 32 + "\n" + "\n\n".join(bounds_info)
+    ax.text(1.25, 0.48, bounds_text, transform=ax.transAxes, fontsize=10,
             family='monospace',
             verticalalignment='top', horizontalalignment='left',
             bbox=dict(boxstyle="round,pad=0.6", facecolor="white", edgecolor="lightgray", alpha=0.9))
 
     # --- CHANGED: Physically force the radar chart to only occupy the left 55% of the image ---
     # Dedicates the other 45% of the wide canvas entirely to the panels on the right
-    plt.subplots_adjust(left=0.05, right=0.55)
+    plt.subplots_adjust(left=0.05, right=0.50)
 
     plt.savefig("experiment_radar_chart.png", dpi=300, bbox_inches='tight')
     print("Saved experiment_radar_chart.png")
