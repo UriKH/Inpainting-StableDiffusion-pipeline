@@ -1,5 +1,0 @@
-the parameters for these experiments for FreeU where:
-parser.add_argument("--freeu_s1", default=0.95, type=float, help="s1 parameter for FreeU")
-parser.add_argument("--freeu_s2", default=0.8, type=float, help="s2 parameter for FreeU")
-parser.add_argument("--freeu_b1", default=1.1, type=float, help="b1 parameter for FreeU")
-parser.add_argument("--freeu_b2", default=1.1, type=float, help="b2 parameter for FreeU")
