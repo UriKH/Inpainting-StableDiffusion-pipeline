@@ -1,0 +1,13 @@
+Pillow
+pandas
+numpy
+matplotlib
+seaborn
+diffusers
+torch
+opencv-python
+torchvision
+scipy
+transformers
+torchmetrics[image]
+DISTS-pytorch
