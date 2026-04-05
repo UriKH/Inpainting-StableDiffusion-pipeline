@@ -24,7 +24,7 @@ The primary required packages include `diffusers`, `transformers`, `torchmetrics
 **Note:** all code should run from the code directory.
 
 ## Usage Guide
-## Data Setup - Reproducability
+### Data Setup - Reproducability
 To download our specific part of the dataset:
 1. In the `data` direcotry, run:
    ```bash
@@ -38,15 +38,15 @@ To download our specific part of the dataset:
 
 **Note:** Splitting is done randomly using seed 42. So as later runs which use the image ID + 42 as image specific seed.
 
-## Generating results
-### 1. Interactive Masking Tool
+### Generating results
+#### 1. Interactive Masking Tool
 Create custom masks and crop your own images using the interactive OpenCV tool.
 ```bash
 python masking_tool.py <path_to_image> -o <output_directory>
 ```
 * **Instructions:** Click and drag to paint the mask, press `c` to clear the canvas, `s` to save the final image and mask, or `q` to quit without saving.
 
-### 2. Generating Inpaintings
+#### 2. Generating Inpaintings
 Run the `data_generator.py` script to generate inpaintings on the COCO dataset using specific pipeline versions.
 ```bash
 python data_generator.py --version <version_number> <input_args> <output_args>
@@ -59,14 +59,14 @@ python data_generator.py --version <version_number> <input_args> <output_args>
   ```
 * Note: Please note that `utils/globals.py` might need to be altered and contain the correct paths to your COCO data files. 
 
-### 3. Evaluating Metrics
+#### 3. Evaluating Metrics
 Calculate quantitative metrics to evaluate your improvements. Supported metrics include FID, SSIM, LPIPS, CLIP Score, MSE, PSNR, DISTS, and DINOv2 distance.
 ```bash
 python create_metrics_json.py <input_args> <output_args>
 ```
 The script will compute the metrics and output a `metrics.json` file in the specified output directory.
 
-### 4. Graphs
+#### 4. Graphs
 To create relevant graphs maching the results like heatmaps and radar charts use `draw_smart_visuals.py`:
  ```bash
  python graph_metrics.py -j <input_dir> -c <res_dir 1> <res_dir 2> ...
